@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metrik — MCX</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='19' fill='%23c8f060'/%3E%3Cpath d='M 23 73 L 23 27 L 50 58 L 77 27 L 77 73' fill='none' stroke='%230a0a0a' stroke-width='10' stroke-linecap='square' stroke-linejoin='miter'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
+  --text:#f0ede8;--text2:#8a8580;--text3:#4a4742;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --accent:#c8f060;
+  --green:#4ade80;--green-bg:rgba(74,222,128,0.1);--green-border:rgba(74,222,128,0.2);
+  --red:#f87171;--red-bg:rgba(248,113,113,0.1);--red-border:rgba(248,113,113,0.2);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,0.1);--amber-border:rgba(251,191,36,0.2);
+  --blue:#60a5fa;--purple:#a78bfa;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --radius:10px;--radius-lg:16px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:var(--bg2);border-bottom:0.5px solid var(--border);position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);flex-wrap:wrap;gap:8px;}
+.top-bar-left{display:flex;align-items:center;gap:12px;}
+.top-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.top-wordmark{font-size:13px;font-weight:600;letter-spacing:3px;color:var(--text2);text-transform:uppercase;}
+.live-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:rgba(200,240,96,0.08);border:0.5px solid rgba(200,240,96,0.2);font-size:10px;font-weight:600;color:var(--accent);}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.demo-chip{font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(251,191,36,0.1);color:var(--amber);border:0.5px solid rgba(251,191,36,0.2);}
+.main-nav{display:flex;padding:0 20px;background:var(--bg2);border-bottom:0.5px solid var(--border);position:sticky;top:52px;z-index:40;overflow-x:auto;}
+.main-tab{padding:14px 16px;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);white-space:nowrap;transition:color 0.15s;}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.main-panel{display:none;}.main-panel.active{display:block;}
+.dr-bar{display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:0.5px solid var(--border);background:var(--bg2);}
+.dr-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);font-family:var(--font);font-size:12px;font-weight:500;}
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;padding:16px 20px;border-bottom:0.5px solid var(--border);}
+.s-card{background:var(--bg2);border-radius:var(--radius-lg);padding:14px 16px;border:0.5px solid var(--border);}
+.s-label{font-size:10px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;}
+.s-val{font-size:20px;font-weight:600;letter-spacing:-0.5px;line-height:1;}
+.s-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.table-wrap{overflow-x:auto;width:100%;}
+table{width:100%;border-collapse:collapse;}
+th{position:sticky;top:0;z-index:2;background:var(--bg3);padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text3);border-bottom:0.5px solid var(--border2);white-space:nowrap;letter-spacing:0.6px;text-transform:uppercase;}
+td{padding:10px 12px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;font-size:12px;}
+tbody tr:hover td{background:var(--bg2);}
+.sep{border-left:1px solid var(--border2)!important;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;}
+.badge.active{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border);}.badge.active::before{background:var(--green);}
+.badge.paused{background:var(--amber-bg);color:var(--amber);border:0.5px solid var(--amber-border);}.badge.paused::before{background:var(--amber);}
+.badge.testing{background:rgba(96,165,250,0.1);color:var(--blue);border:0.5px solid rgba(96,165,250,0.2);}.badge.testing::before{background:var(--blue);}
+.badge.dead{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border);}.badge.dead::before{background:var(--red);}
+.badge.scaling{background:rgba(167,139,250,0.1);color:var(--purple);border:0.5px solid rgba(167,139,250,0.2);}.badge.scaling::before{background:var(--purple);}
+.g{color:var(--green);font-weight:600;}.w{color:var(--amber);font-weight:600;}.r{color:var(--red);font-weight:600;}.n{color:var(--text2);}
+.bump-up{background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;border:0.5px solid var(--green-border);}
+.bump-down{background:var(--red-bg);color:var(--red);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;border:0.5px solid var(--red-border);}
+.hold{background:var(--bg3);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:500;border:0.5px solid var(--border2);}
+.client-tabs-bar{display:flex;padding:0 20px;border-bottom:0.5px solid var(--border);overflow-x:auto;background:var(--bg2);}
+.client-tab{padding:12px 16px;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);white-space:nowrap;flex-shrink:0;}
+.client-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.client-daily-panel{display:none;}.client-daily-panel.active{display:block;}
+.daily-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;padding:14px 20px;border-bottom:0.5px solid var(--border);}
+.ds-card{background:var(--bg2);border-radius:var(--radius-lg);padding:12px 14px;border:0.5px solid var(--border);text-align:center;}
+.ds-label{font-size:9px;font-weight:600;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.8px;}
+.ds-val{font-size:16px;font-weight:600;letter-spacing:-0.3px;}
+.daily-client-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;gap:8px;}
+.daily-client-name{font-size:17px;font-weight:600;letter-spacing:-0.3px;}
+.daily-meta{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap;}
+.daily-meta span{font-size:11px;color:var(--text2);}
+.day-profit td{background:rgba(74,222,128,0.04)!important;}.day-profit td:first-child{box-shadow:inset 3px 0 0 var(--green);}
+.day-loss td{background:rgba(248,113,113,0.04)!important;}.day-loss td:first-child{box-shadow:inset 3px 0 0 var(--red);}
+.day-break td{background:rgba(251,191,36,0.04)!important;}.day-break td:first-child{box-shadow:inset 3px 0 0 var(--amber);}
+.iao-compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;padding:16px 20px;}
+.iao-card{background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;}
+.iao-card.best{border-color:rgba(200,240,96,0.3);background:rgba(200,240,96,0.03);}
+.iao-card-header{padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.iao-card-name{font-size:13px;font-weight:600;}
+.iao-card-dates{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px;}
+.iao-card-body{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.iao-stat-label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;}
+.iao-stat-val{font-size:15px;font-weight:600;}
+.iao-active-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;background:rgba(200,240,96,0.08);color:var(--accent);border:0.5px solid rgba(200,240,96,0.2);}
+.best-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(200,240,96,0.08);color:var(--accent);border:0.5px solid rgba(200,240,96,0.2);}
+.iao-days-badge{font-size:10px;color:var(--text3);padding:2px 7px;border-radius:4px;background:var(--bg3);border:0.5px solid var(--border2);}
+.iao-tag{font-size:10px;font-weight:500;background:rgba(200,240,96,0.08);color:var(--accent);padding:3px 9px;border-radius:20px;border:0.5px solid rgba(200,240,96,0.2);}
+.pw-wrap{padding:20px;}.pw-card{background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;}
+.pw-table{width:100%;border-collapse:collapse;}
+.pw-table th{font-size:10px;font-weight:600;color:var(--text3);padding:10px 16px;border-bottom:0.5px solid var(--border2);text-align:left;background:var(--bg3);text-transform:uppercase;letter-spacing:0.6px;}
+.pw-table td{padding:12px 16px;border-bottom:0.5px solid var(--border);font-size:12px;}
+.pw-code{font-family:var(--mono);font-size:12px;font-weight:500;background:var(--bg3);color:var(--accent);padding:4px 10px;border-radius:8px;letter-spacing:1.5px;border:0.5px solid var(--border2);}
+.tip{font-size:11px;color:var(--text3);padding:8px 20px;border-top:0.5px solid var(--border);}
+.section-header{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:14px 20px 6px;}
+@media(max-width:768px){.summary-bar{grid-template-columns:repeat(2,1fr);}.daily-stats{grid-template-columns:repeat(2,1fr);}.iao-compare-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="top-dot"></div>
+    <div class="top-wordmark">Metrik</div>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <div class="demo-chip">MCX Agency</div>
+  </div>
+  <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">mahlik@getmcx.com</div>
+</div>
+<div class="main-nav">
+  <button class="main-tab active" onclick="goTab('overview',this)">Overview</button>
+  <button class="main-tab" onclick="goTab('acquisition',this)">Acquisition</button>
+  <button class="main-tab" onclick="goTab('profitability',this)">Profitability</button>
+  <button class="main-tab" onclick="goTab('daily',this)">Daily Tracker</button>
+  <button class="main-tab" onclick="goTab('offers',this)">Offer Tracker</button>
+  <button class="main-tab" onclick="goTab('passwords',this)">Passwords</button>
+</div>
+
+<!-- OVERVIEW -->
+<div class="main-panel active" id="panel-overview">
+  <div class="dr-bar"><div class="dr-btn"><span style="font-weight:600">Last 21 days</span><span style="color:var(--text2);font-family:var(--mono);font-size:11px">2026-02-25 – 2026-03-17</span></div></div>
+  <div class="summary-bar">
+    <div class="s-card"><div class="s-label">Active</div><div class="s-val">8<span style="color:var(--text3);font-size:14px;font-weight:400">/14</span></div><div class="s-sub">accounts running</div></div>
+    <div class="s-card"><div class="s-label">Mo. Spend</div><div class="s-val">$36.6k</div><div class="s-sub">all accounts</div></div>
+    <div class="s-card"><div class="s-label">Revenue</div><div class="s-val" style="color:var(--green)">$111.3k</div><div class="s-sub">from daily entries</div></div>
+    <div class="s-card"><div class="s-label">Blended ROAS</div><div class="s-val" style="color:var(--green)">3.04x</div><div class="s-sub">portfolio avg</div></div>
+    <div class="s-card"><div class="s-label">Commission</div><div class="s-val" style="color:var(--accent)">$11.1k</div><div class="s-sub">rev share / mo</div></div>
+    <div class="s-card"><div class="s-label">Portfolio Net</div><div class="s-val" style="color:var(--green)">$12.5k</div><div class="s-sub">after all costs</div></div>
+    <div class="s-card"><div class="s-label">30d Forecast</div><div class="s-val">$159.0k</div><div class="s-sub">projected revenue</div></div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Client</th><th>Status</th><th>Offer</th><th class="sep">ROAS</th><th>BEROAS</th><th>MER</th><th>aMER</th><th class="sep">CPA</th><th>BECPA</th><th class="sep">$/day</th><th>Revenue</th><th>AOV</th><th>GM%</th><th class="sep">Commission</th><th>Forecast</th><th>Action</th></tr></thead>
+    <tbody><tr style="background:rgba(167,139,250,0.03)"><td style="font-weight:600">SKIIWRLD</td><td><span class="badge scaling">scaling</span></td><td><span class="iao-tag">Free ship $75+</span></td><td class="sep"><span class="g">4.26x</span></td><td class="n">2.08x</td><td><span class="g">4.26x</span></td><td><span class="g">4.03x</span></td><td class="sep"><span class="g">$22.44</span></td><td class="n">$45.60</td><td class="sep n">$326/d</td><td style="font-weight:600">$29.2k</td><td>$95</td><td>48%</td><td class="sep" style="color:var(--accent)">$2.9k</td><td>$41.7k</td><td><span class="bump-up">SCALE HARD</span></td></tr>
+<tr style="background:rgba(74,222,128,0.02)"><td style="font-weight:600">Savant Club</td><td><span class="badge active">active</span></td><td><span class="iao-tag">BOGO hats</span></td><td class="sep"><span class="g">3.14x</span></td><td class="n">2.27x</td><td><span class="g">3.14x</span></td><td><span class="g">2.92x</span></td><td class="sep"><span class="g">$26.01</span></td><td class="n">$36.08</td><td class="sep n">$178/d</td><td style="font-weight:600">$11.7k</td><td>$82</td><td>44%</td><td class="sep" style="color:var(--accent)">$1.2k</td><td>$16.8k</td><td><span class="bump-up">SCALE +20%</span></td></tr>
+<tr style="background:rgba(74,222,128,0.02)"><td style="font-weight:600">Balexandert</td><td><span class="badge active">active</span></td><td><span class="iao-tag">15% first order</span></td><td class="sep"><span class="g">3.26x</span></td><td class="n">2.17x</td><td><span class="g">3.26x</span></td><td><span class="g">3.05x</span></td><td class="sep"><span class="g">$26.92</span></td><td class="n">$40.48</td><td class="sep n">$222/d</td><td style="font-weight:600">$15.2k</td><td>$88</td><td>46%</td><td class="sep" style="color:var(--accent)">$1.5k</td><td>$21.7k</td><td><span class="bump-up">SCALE HARD</span></td></tr>
+<tr style="background:rgba(74,222,128,0.02)"><td style="font-weight:600">Sanity</td><td><span class="badge active">active</span></td><td><span class="iao-tag">Free gift $100+</span></td><td class="sep"><span class="g">3.20x</span></td><td class="n">1.92x</td><td><span class="g">3.20x</span></td><td><span class="g">3.00x</span></td><td class="sep"><span class="g">$34.04</span></td><td class="n">$57.20</td><td class="sep n">$177/d</td><td style="font-weight:600">$11.9k</td><td>$110</td><td>52%</td><td class="sep" style="color:var(--accent)">$1.2k</td><td>$16.9k</td><td><span class="bump-up">SCALE HARD</span></td></tr>
+<tr style="background:rgba(74,222,128,0.02)"><td style="font-weight:600">noblecollective</td><td><span class="badge active">active</span></td><td><span class="iao-tag">Ship over $130</span></td><td class="sep"><span class="g">2.74x</span></td><td class="n">2.38x</td><td><span class="g">2.74x</span></td><td><span class="w">2.59x</span></td><td class="sep"><span class="g">$37.93</span></td><td class="n">$43.26</td><td class="sep n">$150/d</td><td style="font-weight:600">$8.6k</td><td>$103</td><td>42%</td><td class="sep" style="color:var(--accent)">$862</td><td>$12.3k</td><td><span class="bump-up">NUDGE UP</span></td></tr>
+<tr style="background:rgba(74,222,128,0.02)"><td style="font-weight:600">omniscent</td><td><span class="badge active">active</span></td><td><span class="iao-tag">Bundle 3 save 20%</span></td><td class="sep"><span class="g">2.76x</span></td><td class="n">2.50x</td><td><span class="g">2.76x</span></td><td><span class="w">2.62x</span></td><td class="sep"><span class="w">$28.84</span></td><td class="n">$32.00</td><td class="sep n">$140/d</td><td style="font-weight:600">$8.1k</td><td>$80</td><td>40%</td><td class="sep" style="color:var(--accent)">$811</td><td>$11.6k</td><td><span class="bump-up">NUDGE UP</span></td></tr>
+<tr style="background:rgba(74,222,128,0.02)"><td style="font-weight:600">Failure.USA</td><td><span class="badge active">active</span></td><td><span class="iao-tag">10% off first</span></td><td class="sep"><span class="w">2.66x</span></td><td class="n">2.44x</td><td><span class="w">2.66x</span></td><td><span class="w">2.48x</span></td><td class="sep"><span class="w">$34.45</span></td><td class="n">$37.72</td><td class="sep n">$131/d</td><td style="font-weight:600">$7.3k</td><td>$92</td><td>41%</td><td class="sep" style="color:var(--accent)">$732</td><td>$10.5k</td><td><span class="bump-up">NUDGE UP</span></td></tr>
+<tr style="background:rgba(74,222,128,0.02)"><td style="font-weight:600">meliorahabitts</td><td><span class="badge active">active</span></td><td><span class="iao-tag">Free ship $75+</span></td><td class="sep"><span class="g">2.50x</span></td><td class="n">1.67x</td><td><span class="g">2.50x</span></td><td><span class="g">2.30x</span></td><td class="sep"><span class="g">$43.35</span></td><td class="n">$66.00</td><td class="sep n">$142/d</td><td style="font-weight:600">$7.5k</td><td>$110</td><td>60%</td><td class="sep" style="color:var(--accent)">$748</td><td>$10.7k</td><td><span class="bump-up">SCALE +20%</span></td></tr>
+<tr style="background:rgba(96,165,250,0.02)"><td style="font-weight:600">sxlfmadeclothing</td><td><span class="badge testing">testing</span></td><td><span style="color:var(--text3)">None</span></td><td class="sep"><span class="w">2.17x</span></td><td class="n">2.27x</td><td><span class="w">2.17x</span></td><td><span class="r">2.04x</span></td><td class="sep"><span class="r">$37.37</span></td><td class="n">$36.08</td><td class="sep n">$93/d</td><td style="font-weight:600">$4.2k</td><td>$82</td><td>44%</td><td class="sep" style="color:var(--accent)">$422</td><td>$6.0k</td><td><span class="hold">HOLD</span></td></tr>
+<tr style="background:rgba(96,165,250,0.02)"><td style="font-weight:600">unitaryproject</td><td><span class="badge testing">testing</span></td><td><span class="iao-tag">20% off</span></td><td class="sep"><span class="r">1.97x</span></td><td class="n">2.13x</td><td><span class="r">1.97x</span></td><td><span class="r">1.86x</span></td><td class="sep"><span class="r">$50.60</span></td><td class="n">$44.65</td><td class="sep n">$72/d</td><td style="font-weight:600">$3.0k</td><td>$95</td><td>47%</td><td class="sep" style="color:var(--accent)">$299</td><td>$4.3k</td><td><span class="bump-down">TRIM -10%</span></td></tr>
+<tr style="background:rgba(251,191,36,0.02)"><td style="font-weight:600">rmbrthedays</td><td><span class="badge paused">paused</span></td><td><span style="color:var(--text3)">None</span></td><td class="sep"><span class="r">1.38x</span></td><td class="n">3.33x</td><td><span class="r">1.38x</span></td><td><span class="r">1.14x</span></td><td class="sep"><span class="r">$26.47</span></td><td class="n">$15.60</td><td class="sep n">$19/d</td><td style="font-weight:600">$546</td><td>$52</td><td>30%</td><td class="sep" style="color:var(--accent)">$55</td><td>$780</td><td><span class="bump-down">PAUSE</span></td></tr>
+<tr style="background:rgba(251,191,36,0.02)"><td style="font-weight:600">sanityfragments</td><td><span class="badge paused">paused</span></td><td><span class="iao-tag">Flash 25% off</span></td><td class="sep"><span class="r">1.73x</span></td><td class="n">2.44x</td><td><span class="r">1.73x</span></td><td><span class="r">1.49x</span></td><td class="sep"><span class="r">$41.53</span></td><td class="n">$37.72</td><td class="sep n">$30/d</td><td style="font-weight:600">$1.1k</td><td>$92</td><td>41%</td><td class="sep" style="color:var(--accent)">$108</td><td>$1.5k</td><td><span class="bump-down">PAUSE</span></td></tr>
+<tr style="background:rgba(248,113,113,0.02)"><td style="font-weight:600">LLTY.US</td><td><span class="badge dead">dead</span></td><td><span style="color:var(--text3)">None</span></td><td class="sep"><span class="r">0.69x</span></td><td class="n">2.63x</td><td><span class="r">0.69x</span></td><td><span class="r">0.50x</span></td><td class="sep"><span class="g">$7.43</span></td><td class="n">$28.50</td><td class="sep n">$7/d</td><td style="font-weight:600">$108</td><td>$75</td><td>38%</td><td class="sep" style="color:var(--accent)">$11</td><td>$154</td><td><span class="bump-down">PAUSE</span></td></tr>
+<tr style="background:rgba(96,165,250,0.02)"><td style="font-weight:600">_888brand</td><td><span class="badge testing">testing</span></td><td><span class="iao-tag">Free ship $60+</span></td><td class="sep"><span class="w">2.39x</span></td><td class="n">2.44x</td><td><span class="w">2.39x</span></td><td><span class="r">2.19x</span></td><td class="sep"><span class="w">$28.81</span></td><td class="n">$29.52</td><td class="sep n">$58/d</td><td style="font-weight:600">$2.9k</td><td>$72</td><td>41%</td><td class="sep" style="color:var(--accent)">$289</td><td>$4.1k</td><td><span class="hold">HOLD</span></td></tr>
+</tbody>
+  </table></div>
+  <div class="tip">Revenue & spend auto-calculate from Daily Tracker · Green = above breakeven · Red = below</div>
+</div>
+
+<!-- ACQUISITION -->
+<div class="main-panel" id="panel-acquisition">
+  <div class="table-wrap"><table>
+    <thead><tr><th>Client</th><th>Status</th><th class="sep"># New Orders</th><th>$ New Rev</th><th>nAOV</th><th>nCPA</th><th>BECPA</th><th>Offer Profit</th><th class="sep"># Return</th><th>$ Return Rev</th><th>rAOV</th><th class="sep">% NCRed</th><th>CAC</th></tr></thead>
+    <tbody><tr><td style="font-weight:600">SKIIWRLD</td><td><span class="badge scaling">scaling</span></td><td class="sep" style="font-weight:600">186</td><td>$17.3k</td><td class="n">$92.82</td><td class="g">$36.80</td><td class="n">$45.60</td><td class="g">+$7.75</td><td class="sep">119</td><td>$11.9k</td><td class="n">$100.17</td><td class="sep g">59.2%</td><td class="g">$36.80</td></tr>
+<tr><td style="font-weight:600">Savant Club</td><td><span class="badge active">active</span></td><td class="sep" style="font-weight:600">90</td><td>$7.2k</td><td class="n">$80.46</td><td class="r">$41.62</td><td class="n">$36.08</td><td class="r">-$6.22</td><td class="sep">54</td><td>$4.5k</td><td class="n">$83.39</td><td class="sep g">61.7%</td><td class="r">$41.62</td></tr>
+<tr><td style="font-weight:600">Balexandert</td><td><span class="badge active">active</span></td><td class="sep" style="font-weight:600">107</td><td>$9.2k</td><td class="n">$86.32</td><td class="r">$43.53</td><td class="n">$40.48</td><td class="r">-$3.82</td><td class="sep">66</td><td>$5.9k</td><td class="n">$90.09</td><td class="sep g">60.8%</td><td class="r">$43.53</td></tr>
+<tr><td style="font-weight:600">Sanity</td><td><span class="badge active">active</span></td><td class="sep" style="font-weight:600">69</td><td>$7.3k</td><td class="n">$106.20</td><td class="w">$53.77</td><td class="n">$57.20</td><td class="g">+$1.45</td><td class="sep">40</td><td>$4.5k</td><td class="n">$113.42</td><td class="sep g">61.8%</td><td class="w">$53.77</td></tr>
+<tr><td style="font-weight:600">noblecollective</td><td><span class="badge active">active</span></td><td class="sep" style="font-weight:600">50</td><td>$5.2k</td><td class="n">$103.76</td><td class="r">$62.96</td><td class="n">$43.26</td><td class="r">-$19.38</td><td class="sep">33</td><td>$3.4k</td><td class="n">$103.91</td><td class="sep g">60.2%</td><td class="r">$62.96</td></tr>
+<tr><td style="font-weight:600">omniscent</td><td><span class="badge active">active</span></td><td class="sep" style="font-weight:600">65</td><td>$4.9k</td><td class="n">$75.95</td><td class="r">$45.26</td><td class="n">$32.00</td><td class="r">-$14.88</td><td class="sep">37</td><td>$3.2k</td><td class="n">$85.76</td><td class="sep g">60.9%</td><td class="r">$45.26</td></tr>
+<tr><td style="font-weight:600">Failure.USA</td><td><span class="badge active">active</span></td><td class="sep" style="font-weight:600">52</td><td>$4.6k</td><td class="n">$88.65</td><td class="r">$53.00</td><td class="n">$37.72</td><td class="r">-$16.65</td><td class="sep">28</td><td>$2.7k</td><td class="n">$96.75</td><td class="sep g">63.0%</td><td class="r">$53.00</td></tr>
+<tr><td style="font-weight:600">meliorahabitts</td><td><span class="badge active">active</span></td><td class="sep" style="font-weight:600">44</td><td>$4.7k</td><td class="n">$106.75</td><td class="r">$67.98</td><td class="n">$66.00</td><td class="r">-$3.93</td><td class="sep">25</td><td>$2.8k</td><td class="n">$111.16</td><td class="sep g">62.8%</td><td class="r">$67.98</td></tr>
+<tr><td style="font-weight:600">sxlfmadeclothing</td><td><span class="badge testing">testing</span></td><td class="sep" style="font-weight:600">31</td><td>$2.5k</td><td class="n">$79.81</td><td class="r">$62.68</td><td class="n">$36.08</td><td class="r">-$27.56</td><td class="sep">21</td><td>$1.7k</td><td class="n">$82.90</td><td class="sep g">58.7%</td><td class="r">$62.68</td></tr>
+<tr><td style="font-weight:600">unitaryproject</td><td><span class="badge testing">testing</span></td><td class="sep" style="font-weight:600">21</td><td>$2.2k</td><td class="n">$106.19</td><td class="r">$72.29</td><td class="n">$44.65</td><td class="r">-$22.38</td><td class="sep">9</td><td>$781</td><td class="n">$86.78</td><td class="sep g">74.6%</td><td class="r">$72.29</td></tr>
+<tr><td style="font-weight:600">rmbrthedays</td><td><span class="badge paused">paused</span></td><td class="sep" style="font-weight:600">15</td><td>$533</td><td class="n">$35.53</td><td class="r">$26.47</td><td class="n">$15.60</td><td class="r">-$15.81</td><td class="sep">0</td><td>$15</td><td class="n">$0.00</td><td class="sep g">97.6%</td><td class="r">$26.47</td></tr>
+<tr><td style="font-weight:600">sanityfragments</td><td><span class="badge paused">paused</span></td><td class="sep" style="font-weight:600">15</td><td>$1.0k</td><td class="n">$69.33</td><td class="r">$41.53</td><td class="n">$37.72</td><td class="r">-$13.1</td><td class="sep">0</td><td>$42</td><td class="n">$0.00</td><td class="sep g">96.5%</td><td class="r">$41.53</td></tr>
+<tr><td style="font-weight:600">LLTY.US</td><td><span class="badge dead">dead</span></td><td class="sep" style="font-weight:600">21</td><td>$107</td><td class="n">$5.10</td><td class="g">$7.43</td><td class="n">$28.50</td><td class="r">-$5.49</td><td class="sep">0</td><td>$1</td><td class="n">$0.00</td><td class="sep g">99.1%</td><td class="g">$7.43</td></tr>
+<tr><td style="font-weight:600">_888brand</td><td><span class="badge testing">testing</span></td><td class="sep" style="font-weight:600">23</td><td>$1.6k</td><td class="n">$69.13</td><td class="r">$52.61</td><td class="n">$29.52</td><td class="r">-$24.27</td><td class="sep">19</td><td>$1.3k</td><td class="n">$68.47</td><td class="sep g">55.1%</td><td class="r">$52.61</td></tr>
+</tbody>
+  </table></div>
+</div>
+
+<!-- PROFITABILITY -->
+<div class="main-panel" id="panel-profitability">
+  <div class="table-wrap"><table>
+    <thead><tr><th>Client</th><th>Status</th><th class="sep">COGS</th><th>COGS GP%</th><th>GPM%</th><th class="sep">Mo. OpEx</th><th>Total Costs</th><th class="sep">Gross Profit</th><th>Net Profit</th><th>Net Margin</th><th>Commission</th><th>Client Net</th></tr></thead>
+    <tbody><tr><td style="font-weight:600">SKIIWRLD</td><td><span class="badge scaling">scaling</span></td><td class="sep">$15.2k</td><td>48%</td><td>48%</td><td class="sep n">$400</td><td class="n">$7.2k</td><td class="sep g">$14.0k</td><td class="g">$6.8k</td><td class="g">23.2%</td><td style="color:var(--accent)">$2.9k</td><td class="g">$3.8k</td></tr>
+<tr><td style="font-weight:600">Savant Club</td><td><span class="badge active">active</span></td><td class="sep">$6.6k</td><td>44%</td><td>44%</td><td class="sep n">$280</td><td class="n">$4.0k</td><td class="sep g">$5.2k</td><td class="g">$1.1k</td><td class="w">9.7%</td><td style="color:var(--accent)">$1.2k</td><td class="w">$-33</td></tr>
+<tr><td style="font-weight:600">Balexandert</td><td><span class="badge active">active</span></td><td class="sep">$8.2k</td><td>46%</td><td>46%</td><td class="sep n">$320</td><td class="n">$5.0k</td><td class="sep g">$7.0k</td><td class="g">$2.0k</td><td class="w">13.2%</td><td style="color:var(--accent)">$1.5k</td><td class="g">$488</td></tr>
+<tr><td style="font-weight:600">Sanity</td><td><span class="badge active">active</span></td><td class="sep">$5.7k</td><td>52%</td><td>52%</td><td class="sep n">$240</td><td class="n">$4.0k</td><td class="sep g">$6.2k</td><td class="g">$2.2k</td><td class="w">18.7%</td><td style="color:var(--accent)">$1.2k</td><td class="g">$1.0k</td></tr>
+<tr><td style="font-weight:600">noblecollective</td><td><span class="badge active">active</span></td><td class="sep">$5.0k</td><td>42%</td><td>42%</td><td class="sep n">$180</td><td class="n">$3.3k</td><td class="sep g">$3.6k</td><td class="g">$291</td><td class="r">3.4%</td><td style="color:var(--accent)">$862</td><td class="r">$-571</td></tr>
+<tr><td style="font-weight:600">omniscent</td><td><span class="badge active">active</span></td><td class="sep">$4.9k</td><td>40%</td><td>40%</td><td class="sep n">$150</td><td class="n">$3.1k</td><td class="sep g">$3.2k</td><td class="g">$152</td><td class="r">1.9%</td><td style="color:var(--accent)">$811</td><td class="r">$-659</td></tr>
+<tr><td style="font-weight:600">Failure.USA</td><td><span class="badge active">active</span></td><td class="sep">$4.3k</td><td>41%</td><td>41%</td><td class="sep n">$200</td><td class="n">$3.0k</td><td class="sep g">$3.0k</td><td class="g">$45</td><td class="r">0.6%</td><td style="color:var(--accent)">$732</td><td class="r">$-687</td></tr>
+<tr><td style="font-weight:600">meliorahabitts</td><td><span class="badge active">active</span></td><td class="sep">$3.0k</td><td>60%</td><td>60%</td><td class="sep n">$260</td><td class="n">$3.3k</td><td class="sep g">$4.5k</td><td class="g">$1.2k</td><td class="w">16.5%</td><td style="color:var(--accent)">$748</td><td class="g">$487</td></tr>
+<tr><td style="font-weight:600">sxlfmadeclothing</td><td><span class="badge testing">testing</span></td><td class="sep">$2.4k</td><td>44%</td><td>44%</td><td class="sep n">$120</td><td class="n">$2.1k</td><td class="sep g">$1.9k</td><td class="r">$-208</td><td class="r">-4.9%</td><td style="color:var(--accent)">$422</td><td class="r">$-630</td></tr>
+<tr><td style="font-weight:600">unitaryproject</td><td><span class="badge testing">testing</span></td><td class="sep">$1.6k</td><td>47%</td><td>47%</td><td class="sep n">$90</td><td class="n">$1.6k</td><td class="sep g">$1.4k</td><td class="r">$-203</td><td class="r">-6.8%</td><td style="color:var(--accent)">$299</td><td class="r">$-502</td></tr>
+<tr><td style="font-weight:600">rmbrthedays</td><td><span class="badge paused">paused</span></td><td class="sep">$382</td><td>30%</td><td>30%</td><td class="sep n">$80</td><td class="n">$477</td><td class="sep g">$164</td><td class="r">$-313</td><td class="r">-57.3%</td><td style="color:var(--accent)">$55</td><td class="r">$-368</td></tr>
+<tr><td style="font-weight:600">sanityfragments</td><td><span class="badge paused">paused</span></td><td class="sep">$636</td><td>41%</td><td>41%</td><td class="sep n">$100</td><td class="n">$723</td><td class="sep g">$442</td><td class="r">$-281</td><td class="r">-26.1%</td><td style="color:var(--accent)">$108</td><td class="r">$-389</td></tr>
+<tr><td style="font-weight:600">LLTY.US</td><td><span class="badge dead">dead</span></td><td class="sep">$67</td><td>38%</td><td>38%</td><td class="sep n">$60</td><td class="n">$216</td><td class="sep g">$41</td><td class="w">$-175</td><td class="r">-162.0%</td><td style="color:var(--accent)">$11</td><td class="w">$-186</td></tr>
+<tr><td style="font-weight:600">_888brand</td><td><span class="badge testing">testing</span></td><td class="sep">$1.7k</td><td>41%</td><td>41%</td><td class="sep n">$110</td><td class="n">$1.3k</td><td class="sep g">$1.2k</td><td class="w">$-136</td><td class="r">-4.7%</td><td style="color:var(--accent)">$289</td><td class="r">$-425</td></tr>
+</tbody>
+  </table></div>
+</div>
+
+<!-- DAILY TRACKER -->
+<div class="main-panel" id="panel-daily">
+  <div class="client-tabs-bar" id="daily-tabs"><button class="client-tab active" onclick="switchDailyTab('skiiwrld',this)">SKIIWRLD</button>
+<button class="client-tab" onclick="switchDailyTab('savant',this)">Savant Club</button>
+<button class="client-tab" onclick="switchDailyTab('balexandert',this)">Balexandert</button>
+<button class="client-tab" onclick="switchDailyTab('sanity',this)">Sanity</button>
+<button class="client-tab" onclick="switchDailyTab('noble',this)">noblecollective</button>
+<button class="client-tab" onclick="switchDailyTab('omniscent',this)">omniscent</button>
+<button class="client-tab" onclick="switchDailyTab('failure',this)">Failure.USA</button>
+<button class="client-tab" onclick="switchDailyTab('meliora',this)">meliorahabitts</button>
+</div>
+  <div class="client-daily-panel active" id="daily-skiiwrld">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">SKIIWRLD</div>
+  <div class="daily-meta"><span class="badge scaling">scaling</span><span>·</span><span>BEROAS <strong style="color:var(--text)">2.08x</strong></span><span>·</span><span style="color:var(--green)">SCALE HARD</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$6.8k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$26.1k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">3.81x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$24.98</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">16<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$369</td><td style="font-weight:600">$1.6k</td><td>17</td><td><span class="g">4.47x</span></td><td class="n">2.08x</td><td>$21.71</td><td>$96.94</td><td>11</td><td>$33.55</td><td><span class="g">+$422</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$408</td><td style="font-weight:600">$429</td><td>5</td><td><span class="r">1.05x</span></td><td class="n">2.08x</td><td>$81.60</td><td>$85.80</td><td>3</td><td>$136.00</td><td><span class="r">-$202</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$301</td><td style="font-weight:600">$1.3k</td><td>14</td><td><span class="g">4.47x</span></td><td class="n">2.08x</td><td>$21.50</td><td>$96.14</td><td>9</td><td>$33.44</td><td><span class="g">+$345</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$250</td><td style="font-weight:600">$1.1k</td><td>12</td><td><span class="g">4.39x</span></td><td class="n">2.08x</td><td>$20.83</td><td>$91.42</td><td>7</td><td>$35.71</td><td><span class="g">+$277</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$392</td><td style="font-weight:600">$1.9k</td><td>20</td><td><span class="g">4.97x</span></td><td class="n">2.08x</td><td>$19.60</td><td>$97.35</td><td>11</td><td>$35.64</td><td><span class="g">+$543</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$406</td><td style="font-weight:600">$1.9k</td><td>20</td><td><span class="g">4.77x</span></td><td class="n">2.08x</td><td>$20.30</td><td>$96.90</td><td>13</td><td>$31.23</td><td><span class="g">+$524</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$311</td><td style="font-weight:600">$1.5k</td><td>16</td><td><span class="g">4.85x</span></td><td class="n">2.08x</td><td>$19.44</td><td>$94.25</td><td>9</td><td>$34.56</td><td><span class="g">+$413</span></td><td style="color:var(--text3);font-size:11px">bumped budget +20%</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$320</td><td style="font-weight:600">$1.6k</td><td>17</td><td><span class="g">5.06x</span></td><td class="n">2.08x</td><td>$18.82</td><td>$95.24</td><td>11</td><td>$29.09</td><td><span class="g">+$457</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$359</td><td style="font-weight:600">$676</td><td>7</td><td><span class="r">1.88x</span></td><td class="n">2.08x</td><td>$51.29</td><td>$96.57</td><td>4</td><td>$89.75</td><td><span class="w">-$35</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$221</td><td style="font-weight:600">$924</td><td>10</td><td><span class="g">4.18x</span></td><td class="n">2.08x</td><td>$22.10</td><td>$92.40</td><td>5</td><td>$44.20</td><td><span class="g">+$223</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$271</td><td style="font-weight:600">$536</td><td>6</td><td><span class="w">1.98x</span></td><td class="n">2.08x</td><td>$45.17</td><td>$89.33</td><td>3</td><td>$90.33</td><td><span class="w">-$14</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$373</td><td style="font-weight:600">$1.7k</td><td>18</td><td><span class="g">4.56x</span></td><td class="n">2.08x</td><td>$20.72</td><td>$94.56</td><td>12</td><td>$31.08</td><td><span class="g">+$444</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$339</td><td style="font-weight:600">$1.7k</td><td>18</td><td><span class="g">4.94x</span></td><td class="n">2.08x</td><td>$18.83</td><td>$92.94</td><td>11</td><td>$30.82</td><td><span class="g">+$464</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$370</td><td style="font-weight:600">$1.7k</td><td>17</td><td><span class="g">4.49x</span></td><td class="n">2.08x</td><td>$21.76</td><td>$97.65</td><td>12</td><td>$30.83</td><td><span class="g">+$427</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$379</td><td style="font-weight:600">$1.6k</td><td>17</td><td><span class="g">4.16x</span></td><td class="n">2.08x</td><td>$22.29</td><td>$92.71</td><td>9</td><td>$42.11</td><td><span class="g">+$377</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$361</td><td style="font-weight:600">$1.6k</td><td>17</td><td><span class="g">4.53x</span></td><td class="n">2.08x</td><td>$21.24</td><td>$96.18</td><td>10</td><td>$36.10</td><td><span class="g">+$424</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$222</td><td style="font-weight:600">$972</td><td>10</td><td><span class="g">4.38x</span></td><td class="n">2.08x</td><td>$22.20</td><td>$97.20</td><td>7</td><td>$31.71</td><td><span class="g">+$245</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$205</td><td style="font-weight:600">$804</td><td>8</td><td><span class="g">3.92x</span></td><td class="n">2.08x</td><td>$25.62</td><td>$100.50</td><td>5</td><td>$41.00</td><td><span class="g">+$181</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$313</td><td style="font-weight:600">$604</td><td>6</td><td><span class="r">1.93x</span></td><td class="n">2.08x</td><td>$52.17</td><td>$100.67</td><td>4</td><td>$78.25</td><td><span class="w">-$23</span></td><td style="color:var(--text3);font-size:11px">algo learning</td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$343</td><td style="font-weight:600">$581</td><td>6</td><td><span class="r">1.69x</span></td><td class="n">2.08x</td><td>$57.17</td><td>$96.83</td><td>3</td><td>$114.33</td><td><span class="r">-$64</span></td><td style="color:var(--text3);font-size:11px">algo learning</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$331</td><td style="font-weight:600">$1.2k</td><td>13</td><td><span class="g">3.65x</span></td><td class="n">2.08x</td><td>$25.46</td><td>$93.00</td><td>7</td><td>$47.29</td><td><span class="g">+$249</span></td><td style="color:var(--text3);font-size:11px">campaign launch</td></tr>
+</tbody></table></div></div>
+<div class="client-daily-panel" id="daily-savant">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">Savant Club</div>
+  <div class="daily-meta"><span class="badge active">active</span><span>·</span><span>BEROAS <strong style="color:var(--text)">2.27x</strong></span><span>·</span><span style="color:var(--green)">SCALE +20%</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$3.7k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$10.8k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">2.88x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$28.38</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">14<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$186</td><td style="font-weight:600">$700</td><td>9</td><td><span class="g">3.76x</span></td><td class="n">2.27x</td><td>$20.67</td><td>$77.78</td><td>5</td><td>$37.20</td><td><span class="g">+$122</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$212</td><td style="font-weight:600">$767</td><td>9</td><td><span class="g">3.62x</span></td><td class="n">2.27x</td><td>$23.56</td><td>$85.22</td><td>6</td><td>$35.33</td><td><span class="g">+$125</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$138</td><td style="font-weight:600">$443</td><td>5</td><td><span class="g">3.21x</span></td><td class="n">2.27x</td><td>$27.60</td><td>$88.60</td><td>3</td><td>$46.00</td><td><span class="g">+$57</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$163</td><td style="font-weight:600">$355</td><td>4</td><td><span class="w">2.18x</span></td><td class="n">2.27x</td><td>$40.75</td><td>$88.75</td><td>2</td><td>$81.50</td><td><span class="w">-$7</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$176</td><td style="font-weight:600">$591</td><td>7</td><td><span class="g">3.36x</span></td><td class="n">2.27x</td><td>$25.14</td><td>$84.43</td><td>5</td><td>$35.20</td><td><span class="g">+$84</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$166</td><td style="font-weight:600">$580</td><td>7</td><td><span class="g">3.49x</span></td><td class="n">2.27x</td><td>$23.71</td><td>$82.86</td><td>4</td><td>$41.50</td><td><span class="g">+$89</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$173</td><td style="font-weight:600">$554</td><td>7</td><td><span class="g">3.20x</span></td><td class="n">2.27x</td><td>$24.71</td><td>$79.14</td><td>4</td><td>$43.25</td><td><span class="g">+$71</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$225</td><td style="font-weight:600">$797</td><td>10</td><td><span class="g">3.54x</span></td><td class="n">2.27x</td><td>$22.50</td><td>$79.70</td><td>6</td><td>$37.50</td><td><span class="g">+$126</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$178</td><td style="font-weight:600">$620</td><td>8</td><td><span class="g">3.48x</span></td><td class="n">2.27x</td><td>$22.25</td><td>$77.50</td><td>5</td><td>$35.60</td><td><span class="g">+$95</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$142</td><td style="font-weight:600">$481</td><td>6</td><td><span class="g">3.39x</span></td><td class="n">2.27x</td><td>$23.67</td><td>$80.17</td><td>3</td><td>$47.33</td><td><span class="g">+$70</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$142</td><td style="font-weight:600">$420</td><td>5</td><td><span class="g">2.96x</span></td><td class="n">2.27x</td><td>$28.40</td><td>$84.00</td><td>3</td><td>$47.33</td><td><span class="g">+$43</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$192</td><td style="font-weight:600">$391</td><td>5</td><td><span class="r">2.04x</span></td><td class="n">2.27x</td><td>$38.40</td><td>$78.20</td><td>3</td><td>$64.00</td><td><span class="w">-$20</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$177</td><td style="font-weight:600">$512</td><td>6</td><td><span class="g">2.89x</span></td><td class="n">2.27x</td><td>$29.50</td><td>$85.33</td><td>4</td><td>$44.25</td><td><span class="g">+$48</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$207</td><td style="font-weight:600">$428</td><td>5</td><td><span class="r">2.07x</span></td><td class="n">2.27x</td><td>$41.40</td><td>$85.60</td><td>3</td><td>$69.00</td><td><span class="w">-$19</span></td><td style="color:var(--text3);font-size:11px">BOGO offer live 🔥</td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$231</td><td style="font-weight:600">$459</td><td>6</td><td><span class="r">1.99x</span></td><td class="n">2.27x</td><td>$38.50</td><td>$76.50</td><td>3</td><td>$77.00</td><td><span class="w">-$29</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$232</td><td style="font-weight:600">$380</td><td>5</td><td><span class="r">1.64x</span></td><td class="n">2.27x</td><td>$46.40</td><td>$76.00</td><td>3</td><td>$77.33</td><td><span class="r">-$65</span></td><td style="color:var(--text3);font-size:11px">pre-offer slump</td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$152</td><td style="font-weight:600">$223</td><td>3</td><td><span class="r">1.47x</span></td><td class="n">2.27x</td><td>$50.67</td><td>$74.33</td><td>2</td><td>$76.00</td><td><span class="r">-$54</span></td><td style="color:var(--text3);font-size:11px">pre-offer slump</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$129</td><td style="font-weight:600">$491</td><td>6</td><td><span class="g">3.81x</span></td><td class="n">2.27x</td><td>$21.50</td><td>$81.83</td><td>4</td><td>$32.25</td><td><span class="g">+$87</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$182</td><td style="font-weight:600">$682</td><td>8</td><td><span class="g">3.75x</span></td><td class="n">2.27x</td><td>$22.75</td><td>$85.25</td><td>5</td><td>$36.40</td><td><span class="g">+$118</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$165</td><td style="font-weight:600">$565</td><td>7</td><td><span class="g">3.42x</span></td><td class="n">2.27x</td><td>$23.57</td><td>$80.71</td><td>5</td><td>$33.00</td><td><span class="g">+$84</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$178</td><td style="font-weight:600">$351</td><td>4</td><td><span class="r">1.97x</span></td><td class="n">2.27x</td><td>$44.50</td><td>$87.75</td><td>2</td><td>$89.00</td><td><span class="w">-$24</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+</tbody></table></div></div>
+<div class="client-daily-panel" id="daily-balexandert">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">Balexandert</div>
+  <div class="daily-meta"><span class="badge active">active</span><span>·</span><span>BEROAS <strong style="color:var(--text)">2.17x</strong></span><span>·</span><span style="color:var(--green)">SCALE HARD</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$4.7k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$14.0k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">3.00x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$29.11</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">18<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$190</td><td style="font-weight:600">$638</td><td>7</td><td><span class="g">3.36x</span></td><td class="n">2.17x</td><td>$27.14</td><td>$91.14</td><td>5</td><td>$38.00</td><td><span class="g">+$103</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$262</td><td style="font-weight:600">$538</td><td>6</td><td><span class="r">2.05x</span></td><td class="n">2.17x</td><td>$43.67</td><td>$89.67</td><td>4</td><td>$65.50</td><td><span class="w">-$15</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$188</td><td style="font-weight:600">$564</td><td>6</td><td><span class="g">3.00x</span></td><td class="n">2.17x</td><td>$31.33</td><td>$94.00</td><td>4</td><td>$47.00</td><td><span class="g">+$71</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$146</td><td style="font-weight:600">$406</td><td>5</td><td><span class="g">2.78x</span></td><td class="n">2.17x</td><td>$29.20</td><td>$81.20</td><td>3</td><td>$48.67</td><td><span class="g">+$41</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$243</td><td style="font-weight:600">$704</td><td>8</td><td><span class="g">2.90x</span></td><td class="n">2.17x</td><td>$30.38</td><td>$88.00</td><td>5</td><td>$48.60</td><td><span class="g">+$81</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$255</td><td style="font-weight:600">$871</td><td>10</td><td><span class="g">3.42x</span></td><td class="n">2.17x</td><td>$25.50</td><td>$87.10</td><td>7</td><td>$36.43</td><td><span class="g">+$146</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$271</td><td style="font-weight:600">$397</td><td>5</td><td><span class="r">1.46x</span></td><td class="n">2.17x</td><td>$54.20</td><td>$79.40</td><td>2</td><td>$135.50</td><td><span class="r">-$88</span></td><td style="color:var(--text3);font-size:11px">poor CTR</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$282</td><td style="font-weight:600">$846</td><td>10</td><td><span class="g">3.00x</span></td><td class="n">2.17x</td><td>$28.20</td><td>$84.60</td><td>6</td><td>$47.00</td><td><span class="g">+$107</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$213</td><td style="font-weight:600">$714</td><td>8</td><td><span class="g">3.35x</span></td><td class="n">2.17x</td><td>$26.62</td><td>$89.25</td><td>4</td><td>$53.25</td><td><span class="g">+$115</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$180</td><td style="font-weight:600">$523</td><td>6</td><td><span class="g">2.91x</span></td><td class="n">2.17x</td><td>$30.00</td><td>$87.17</td><td>4</td><td>$45.00</td><td><span class="g">+$61</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$171</td><td style="font-weight:600">$568</td><td>6</td><td><span class="g">3.32x</span></td><td class="n">2.17x</td><td>$28.50</td><td>$94.67</td><td>4</td><td>$42.75</td><td><span class="g">+$90</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$197</td><td style="font-weight:600">$678</td><td>8</td><td><span class="g">3.44x</span></td><td class="n">2.17x</td><td>$24.62</td><td>$84.75</td><td>5</td><td>$39.40</td><td><span class="g">+$115</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$209</td><td style="font-weight:600">$645</td><td>7</td><td><span class="g">3.09x</span></td><td class="n">2.17x</td><td>$29.86</td><td>$92.14</td><td>4</td><td>$52.25</td><td><span class="g">+$88</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$227</td><td style="font-weight:600">$697</td><td>8</td><td><span class="g">3.07x</span></td><td class="n">2.17x</td><td>$28.38</td><td>$87.12</td><td>6</td><td>$37.83</td><td><span class="g">+$94</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$261</td><td style="font-weight:600">$838</td><td>10</td><td><span class="g">3.21x</span></td><td class="n">2.17x</td><td>$26.10</td><td>$83.80</td><td>6</td><td>$43.50</td><td><span class="g">+$124</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$281</td><td style="font-weight:600">$957</td><td>11</td><td><span class="g">3.41x</span></td><td class="n">2.17x</td><td>$25.55</td><td>$87.00</td><td>7</td><td>$40.14</td><td><span class="g">+$159</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$168</td><td style="font-weight:600">$607</td><td>7</td><td><span class="g">3.61x</span></td><td class="n">2.17x</td><td>$24.00</td><td>$86.71</td><td>4</td><td>$42.00</td><td><span class="g">+$111</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$157</td><td style="font-weight:600">$491</td><td>6</td><td><span class="g">3.13x</span></td><td class="n">2.17x</td><td>$26.17</td><td>$81.83</td><td>3</td><td>$52.33</td><td><span class="g">+$69</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$276</td><td style="font-weight:600">$1.0k</td><td>12</td><td><span class="g">3.68x</span></td><td class="n">2.17x</td><td>$23.00</td><td>$84.75</td><td>8</td><td>$34.50</td><td><span class="g">+$192</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$257</td><td style="font-weight:600">$831</td><td>9</td><td><span class="g">3.23x</span></td><td class="n">2.17x</td><td>$28.56</td><td>$92.33</td><td>5</td><td>$51.40</td><td><span class="g">+$125</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$224</td><td style="font-weight:600">$466</td><td>5</td><td><span class="w">2.08x</span></td><td class="n">2.17x</td><td>$44.80</td><td>$93.20</td><td>2</td><td>$112.00</td><td><span class="w">-$10</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+</tbody></table></div></div>
+<div class="client-daily-panel" id="daily-sanity">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">Sanity</div>
+  <div class="daily-meta"><span class="badge active">active</span><span>·</span><span>BEROAS <strong style="color:var(--text)">1.92x</strong></span><span>·</span><span style="color:var(--green)">SCALE HARD</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$3.7k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$11.3k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">3.04x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$36.02</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">18<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$160</td><td style="font-weight:600">$499</td><td>5</td><td><span class="g">3.12x</span></td><td class="n">1.92x</td><td>$32.00</td><td>$99.80</td><td>3</td><td>$53.33</td><td><span class="g">+$99</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$208</td><td style="font-weight:600">$729</td><td>7</td><td><span class="g">3.50x</span></td><td class="n">1.92x</td><td>$29.71</td><td>$104.14</td><td>4</td><td>$52.00</td><td><span class="g">+$171</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$125</td><td style="font-weight:600">$374</td><td>3</td><td><span class="g">2.99x</span></td><td class="n">1.92x</td><td>$41.67</td><td>$124.67</td><td>2</td><td>$62.50</td><td><span class="g">+$69</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$150</td><td style="font-weight:600">$492</td><td>4</td><td><span class="g">3.28x</span></td><td class="n">1.92x</td><td>$37.50</td><td>$123.00</td><td>2</td><td>$75.00</td><td><span class="g">+$106</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$153</td><td style="font-weight:600">$526</td><td>5</td><td><span class="g">3.44x</span></td><td class="n">1.92x</td><td>$30.60</td><td>$105.20</td><td>3</td><td>$51.00</td><td><span class="g">+$121</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$191</td><td style="font-weight:600">$387</td><td>3</td><td><span class="w">2.03x</span></td><td class="n">1.92x</td><td>$63.67</td><td>$129.00</td><td>2</td><td>$95.50</td><td><span class="g">+$10</span></td><td style="color:var(--text3);font-size:11px">post-budget cooldown</td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$183</td><td style="font-weight:600">$312</td><td>3</td><td><span class="r">1.70x</span></td><td class="n">1.92x</td><td>$61.00</td><td>$104.00</td><td>2</td><td>$91.50</td><td><span class="w">-$21</span></td><td style="color:var(--text3);font-size:11px">post-budget cooldown</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$193</td><td style="font-weight:600">$610</td><td>6</td><td><span class="g">3.16x</span></td><td class="n">1.92x</td><td>$32.17</td><td>$101.67</td><td>4</td><td>$48.25</td><td><span class="g">+$124</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$169</td><td style="font-weight:600">$662</td><td>6</td><td><span class="g">3.92x</span></td><td class="n">1.92x</td><td>$28.17</td><td>$110.33</td><td>3</td><td>$56.33</td><td><span class="g">+$175</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$155</td><td style="font-weight:600">$518</td><td>5</td><td><span class="g">3.34x</span></td><td class="n">1.92x</td><td>$31.00</td><td>$103.60</td><td>4</td><td>$38.75</td><td><span class="g">+$114</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$149</td><td style="font-weight:600">$247</td><td>2</td><td><span class="r">1.66x</span></td><td class="n">1.92x</td><td>$74.50</td><td>$123.50</td><td>1</td><td>$149.00</td><td><span class="w">-$21</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$194</td><td style="font-weight:600">$591</td><td>5</td><td><span class="g">3.05x</span></td><td class="n">1.92x</td><td>$38.80</td><td>$118.20</td><td>3</td><td>$64.67</td><td><span class="g">+$113</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$209</td><td style="font-weight:600">$673</td><td>6</td><td><span class="g">3.22x</span></td><td class="n">1.92x</td><td>$34.83</td><td>$112.17</td><td>4</td><td>$52.25</td><td><span class="g">+$141</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$206</td><td style="font-weight:600">$369</td><td>3</td><td><span class="r">1.79x</span></td><td class="n">1.92x</td><td>$68.67</td><td>$123.00</td><td>2</td><td>$103.00</td><td><span class="w">-$14</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$185</td><td style="font-weight:600">$564</td><td>5</td><td><span class="g">3.05x</span></td><td class="n">1.92x</td><td>$37.00</td><td>$112.80</td><td>4</td><td>$46.25</td><td><span class="g">+$108</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$211</td><td style="font-weight:600">$826</td><td>8</td><td><span class="g">3.91x</span></td><td class="n">1.92x</td><td>$26.38</td><td>$103.25</td><td>5</td><td>$42.20</td><td><span class="g">+$219</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$157</td><td style="font-weight:600">$527</td><td>5</td><td><span class="g">3.36x</span></td><td class="n">1.92x</td><td>$31.40</td><td>$105.40</td><td>3</td><td>$52.33</td><td><span class="g">+$117</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$159</td><td style="font-weight:600">$510</td><td>5</td><td><span class="g">3.21x</span></td><td class="n">1.92x</td><td>$31.80</td><td>$102.00</td><td>3</td><td>$53.00</td><td><span class="g">+$106</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$153</td><td style="font-weight:600">$469</td><td>4</td><td><span class="g">3.07x</span></td><td class="n">1.92x</td><td>$38.25</td><td>$117.25</td><td>3</td><td>$51.00</td><td><span class="g">+$91</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$212</td><td style="font-weight:600">$745</td><td>7</td><td><span class="g">3.51x</span></td><td class="n">1.92x</td><td>$30.29</td><td>$106.43</td><td>5</td><td>$42.40</td><td><span class="g">+$175</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$188</td><td style="font-weight:600">$632</td><td>6</td><td><span class="g">3.36x</span></td><td class="n">1.92x</td><td>$31.33</td><td>$105.33</td><td>3</td><td>$62.67</td><td><span class="g">+$141</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+</tbody></table></div></div>
+<div class="client-daily-panel" id="daily-noble">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">noblecollective</div>
+  <div class="daily-meta"><span class="badge active">active</span><span>·</span><span>BEROAS <strong style="color:var(--text)">2.38x</strong></span><span>·</span><span style="color:var(--green)">NUDGE UP</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$3.1k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$8.5k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">2.71x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$38.39</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">17<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$165</td><td style="font-weight:600">$414</td><td>4</td><td><span class="w">2.51x</span></td><td class="n">2.38x</td><td>$41.25</td><td>$103.50</td><td>2</td><td>$82.50</td><td><span class="g">+$9</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$171</td><td style="font-weight:600">$487</td><td>5</td><td><span class="g">2.85x</span></td><td class="n">2.38x</td><td>$34.20</td><td>$97.40</td><td>3</td><td>$57.00</td><td><span class="g">+$34</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$113</td><td style="font-weight:600">$315</td><td>3</td><td><span class="g">2.79x</span></td><td class="n">2.38x</td><td>$37.67</td><td>$105.00</td><td>2</td><td>$56.50</td><td><span class="g">+$19</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$147</td><td style="font-weight:600">$443</td><td>4</td><td><span class="g">3.01x</span></td><td class="n">2.38x</td><td>$36.75</td><td>$110.75</td><td>3</td><td>$49.00</td><td><span class="g">+$39</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$162</td><td style="font-weight:600">$431</td><td>4</td><td><span class="g">2.66x</span></td><td class="n">2.38x</td><td>$40.50</td><td>$107.75</td><td>2</td><td>$81.00</td><td><span class="g">+$19</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$185</td><td style="font-weight:600">$557</td><td>5</td><td><span class="g">3.01x</span></td><td class="n">2.38x</td><td>$37.00</td><td>$111.40</td><td>3</td><td>$61.67</td><td><span class="g">+$49</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$153</td><td style="font-weight:600">$439</td><td>4</td><td><span class="g">2.87x</span></td><td class="n">2.38x</td><td>$38.25</td><td>$109.75</td><td>2</td><td>$76.50</td><td><span class="g">+$31</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$146</td><td style="font-weight:600">$315</td><td>3</td><td><span class="r">2.16x</span></td><td class="n">2.38x</td><td>$48.67</td><td>$105.00</td><td>1</td><td>$146.00</td><td><span class="w">-$14</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$139</td><td style="font-weight:600">$194</td><td>2</td><td><span class="r">1.40x</span></td><td class="n">2.38x</td><td>$69.50</td><td>$97.00</td><td>1</td><td>$139.00</td><td><span class="r">-$58</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$126</td><td style="font-weight:600">$199</td><td>2</td><td><span class="r">1.58x</span></td><td class="n">2.38x</td><td>$63.00</td><td>$99.50</td><td>1</td><td>$126.00</td><td><span class="w">-$42</span></td><td style="color:var(--text3);font-size:11px">CPMs spiked</td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$140</td><td style="font-weight:600">$226</td><td>2</td><td><span class="r">1.61x</span></td><td class="n">2.38x</td><td>$70.00</td><td>$113.00</td><td>1</td><td>$140.00</td><td><span class="w">-$45</span></td><td style="color:var(--text3);font-size:11px">CPMs spiked</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$177</td><td style="font-weight:600">$577</td><td>6</td><td><span class="g">3.26x</span></td><td class="n">2.38x</td><td>$29.50</td><td>$96.17</td><td>4</td><td>$44.25</td><td><span class="g">+$65</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$179</td><td style="font-weight:600">$616</td><td>6</td><td><span class="g">3.44x</span></td><td class="n">2.38x</td><td>$29.83</td><td>$102.67</td><td>4</td><td>$44.75</td><td><span class="g">+$80</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$141</td><td style="font-weight:600">$392</td><td>4</td><td><span class="g">2.78x</span></td><td class="n">2.38x</td><td>$35.25</td><td>$98.00</td><td>3</td><td>$47.00</td><td><span class="g">+$24</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$147</td><td style="font-weight:600">$440</td><td>4</td><td><span class="g">2.99x</span></td><td class="n">2.38x</td><td>$36.75</td><td>$110.00</td><td>2</td><td>$73.50</td><td><span class="g">+$38</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$151</td><td style="font-weight:600">$466</td><td>5</td><td><span class="g">3.09x</span></td><td class="n">2.38x</td><td>$30.20</td><td>$93.20</td><td>3</td><td>$50.33</td><td><span class="g">+$45</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$115</td><td style="font-weight:600">$338</td><td>3</td><td><span class="g">2.94x</span></td><td class="n">2.38x</td><td>$38.33</td><td>$112.67</td><td>2</td><td>$57.50</td><td><span class="g">+$27</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$101</td><td style="font-weight:600">$272</td><td>3</td><td><span class="g">2.69x</span></td><td class="n">2.38x</td><td>$33.67</td><td>$90.67</td><td>2</td><td>$50.50</td><td><span class="g">+$13</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$178</td><td style="font-weight:600">$553</td><td>5</td><td><span class="g">3.11x</span></td><td class="n">2.38x</td><td>$35.60</td><td>$110.60</td><td>3</td><td>$59.33</td><td><span class="g">+$54</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$151</td><td style="font-weight:600">$412</td><td>4</td><td><span class="g">2.73x</span></td><td class="n">2.38x</td><td>$37.75</td><td>$103.00</td><td>2</td><td>$75.50</td><td><span class="g">+$22</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$161</td><td style="font-weight:600">$441</td><td>4</td><td><span class="g">2.74x</span></td><td class="n">2.38x</td><td>$40.25</td><td>$110.25</td><td>2</td><td>$80.50</td><td><span class="g">+$24</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+</tbody></table></div></div>
+<div class="client-daily-panel" id="daily-omniscent">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">omniscent</div>
+  <div class="daily-meta"><span class="badge active">active</span><span>·</span><span>BEROAS <strong style="color:var(--text)">2.50x</strong></span><span>·</span><span style="color:var(--green)">NUDGE UP</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$2.9k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$7.9k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">2.68x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$29.72</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">16<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$156</td><td style="font-weight:600">$460</td><td>6</td><td><span class="g">2.95x</span></td><td class="n">2.50x</td><td>$26.00</td><td>$76.67</td><td>4</td><td>$39.00</td><td><span class="g">+$28</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$132</td><td style="font-weight:600">$422</td><td>5</td><td><span class="g">3.20x</span></td><td class="n">2.50x</td><td>$26.40</td><td>$84.40</td><td>3</td><td>$44.00</td><td><span class="g">+$37</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$121</td><td style="font-weight:600">$363</td><td>5</td><td><span class="g">3.00x</span></td><td class="n">2.50x</td><td>$24.20</td><td>$72.60</td><td>3</td><td>$40.33</td><td><span class="g">+$24</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$116</td><td style="font-weight:600">$294</td><td>4</td><td><span class="w">2.53x</span></td><td class="n">2.50x</td><td>$29.00</td><td>$73.50</td><td>2</td><td>$58.00</td><td><span class="g">+$2</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$139</td><td style="font-weight:600">$414</td><td>5</td><td><span class="g">2.98x</span></td><td class="n">2.50x</td><td>$27.80</td><td>$82.80</td><td>3</td><td>$46.33</td><td><span class="g">+$27</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$138</td><td style="font-weight:600">$446</td><td>6</td><td><span class="g">3.23x</span></td><td class="n">2.50x</td><td>$23.00</td><td>$74.33</td><td>4</td><td>$34.50</td><td><span class="g">+$40</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$157</td><td style="font-weight:600">$449</td><td>6</td><td><span class="g">2.86x</span></td><td class="n">2.50x</td><td>$26.17</td><td>$74.83</td><td>4</td><td>$39.25</td><td><span class="g">+$23</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$161</td><td style="font-weight:600">$474</td><td>6</td><td><span class="g">2.94x</span></td><td class="n">2.50x</td><td>$26.83</td><td>$79.00</td><td>4</td><td>$40.25</td><td><span class="g">+$29</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$167</td><td style="font-weight:600">$327</td><td>4</td><td><span class="r">1.96x</span></td><td class="n">2.50x</td><td>$41.75</td><td>$81.75</td><td>2</td><td>$83.50</td><td><span class="w">-$36</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$105</td><td style="font-weight:600">$290</td><td>4</td><td><span class="g">2.76x</span></td><td class="n">2.50x</td><td>$26.25</td><td>$72.50</td><td>2</td><td>$52.50</td><td><span class="g">+$11</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$117</td><td style="font-weight:600">$317</td><td>4</td><td><span class="w">2.71x</span></td><td class="n">2.50x</td><td>$29.25</td><td>$79.25</td><td>3</td><td>$39.00</td><td><span class="g">+$10</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$149</td><td style="font-weight:600">$427</td><td>5</td><td><span class="g">2.87x</span></td><td class="n">2.50x</td><td>$29.80</td><td>$85.40</td><td>3</td><td>$49.67</td><td><span class="g">+$22</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$152</td><td style="font-weight:600">$483</td><td>6</td><td><span class="g">3.18x</span></td><td class="n">2.50x</td><td>$25.33</td><td>$80.50</td><td>4</td><td>$38.00</td><td><span class="g">+$41</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$155</td><td style="font-weight:600">$484</td><td>6</td><td><span class="g">3.12x</span></td><td class="n">2.50x</td><td>$25.83</td><td>$80.67</td><td>3</td><td>$51.67</td><td><span class="g">+$39</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$162</td><td style="font-weight:600">$219</td><td>2</td><td><span class="r">1.35x</span></td><td class="n">2.50x</td><td>$81.00</td><td>$109.50</td><td>2</td><td>$81.00</td><td><span class="r">-$74</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$124</td><td style="font-weight:600">$181</td><td>2</td><td><span class="r">1.46x</span></td><td class="n">2.50x</td><td>$62.00</td><td>$90.50</td><td>2</td><td>$62.00</td><td><span class="r">-$52</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$120</td><td style="font-weight:600">$394</td><td>5</td><td><span class="g">3.28x</span></td><td class="n">2.50x</td><td>$24.00</td><td>$78.80</td><td>3</td><td>$40.00</td><td><span class="g">+$38</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$128</td><td style="font-weight:600">$297</td><td>4</td><td><span class="r">2.32x</span></td><td class="n">2.50x</td><td>$32.00</td><td>$74.25</td><td>2</td><td>$64.00</td><td><span class="w">-$9</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$166</td><td style="font-weight:600">$462</td><td>6</td><td><span class="g">2.78x</span></td><td class="n">2.50x</td><td>$27.67</td><td>$77.00</td><td>3</td><td>$55.33</td><td><span class="g">+$19</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$131</td><td style="font-weight:600">$358</td><td>4</td><td><span class="w">2.73x</span></td><td class="n">2.50x</td><td>$32.75</td><td>$89.50</td><td>3</td><td>$43.67</td><td><span class="g">+$12</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$146</td><td style="font-weight:600">$322</td><td>4</td><td><span class="r">2.21x</span></td><td class="n">2.50x</td><td>$36.50</td><td>$80.50</td><td>2</td><td>$73.00</td><td><span class="w">-$17</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+</tbody></table></div></div>
+<div class="client-daily-panel" id="daily-failure">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">Failure.USA</div>
+  <div class="daily-meta"><span class="badge active">active</span><span>·</span><span>BEROAS <strong style="color:var(--text)">2.44x</strong></span><span>·</span><span style="color:var(--green)">NUDGE UP</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$2.8k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$7.0k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">2.53x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$35.79</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">16<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$143</td><td style="font-weight:600">$188</td><td>2</td><td><span class="r">1.31x</span></td><td class="n">2.44x</td><td>$71.50</td><td>$94.00</td><td>1</td><td>$143.00</td><td><span class="r">-$66</span></td><td style="color:var(--text3);font-size:11px">below target</td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$127</td><td style="font-weight:600">$246</td><td>3</td><td><span class="r">1.94x</span></td><td class="n">2.44x</td><td>$42.33</td><td>$82.00</td><td>1</td><td>$127.00</td><td><span class="w">-$26</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$111</td><td style="font-weight:600">$343</td><td>4</td><td><span class="g">3.09x</span></td><td class="n">2.44x</td><td>$27.75</td><td>$85.75</td><td>3</td><td>$37.00</td><td><span class="g">+$30</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$112</td><td style="font-weight:600">$335</td><td>4</td><td><span class="g">2.99x</span></td><td class="n">2.44x</td><td>$28.00</td><td>$83.75</td><td>3</td><td>$37.33</td><td><span class="g">+$25</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$152</td><td style="font-weight:600">$427</td><td>5</td><td><span class="g">2.81x</span></td><td class="n">2.44x</td><td>$30.40</td><td>$85.40</td><td>3</td><td>$50.67</td><td><span class="g">+$23</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$131</td><td style="font-weight:600">$355</td><td>4</td><td><span class="g">2.71x</span></td><td class="n">2.44x</td><td>$32.75</td><td>$88.75</td><td>2</td><td>$65.50</td><td><span class="g">+$15</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$143</td><td style="font-weight:600">$353</td><td>4</td><td><span class="w">2.47x</span></td><td class="n">2.44x</td><td>$35.75</td><td>$88.25</td><td>2</td><td>$71.50</td><td><span class="g">+$2</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$147</td><td style="font-weight:600">$440</td><td>5</td><td><span class="g">2.99x</span></td><td class="n">2.44x</td><td>$29.40</td><td>$88.00</td><td>4</td><td>$36.75</td><td><span class="g">+$33</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$137</td><td style="font-weight:600">$415</td><td>5</td><td><span class="g">3.03x</span></td><td class="n">2.44x</td><td>$27.40</td><td>$83.00</td><td>4</td><td>$34.25</td><td><span class="g">+$33</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$112</td><td style="font-weight:600">$344</td><td>4</td><td><span class="g">3.07x</span></td><td class="n">2.44x</td><td>$28.00</td><td>$86.00</td><td>2</td><td>$56.00</td><td><span class="g">+$29</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$103</td><td style="font-weight:600">$208</td><td>2</td><td><span class="r">2.02x</span></td><td class="n">2.44x</td><td>$51.50</td><td>$104.00</td><td>1</td><td>$103.00</td><td><span class="w">-$18</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$140</td><td style="font-weight:600">$169</td><td>2</td><td><span class="r">1.21x</span></td><td class="n">2.44x</td><td>$70.00</td><td>$84.50</td><td>1</td><td>$140.00</td><td><span class="r">-$71</span></td><td style="color:var(--text3);font-size:11px">audience overlap</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$125</td><td style="font-weight:600">$306</td><td>3</td><td><span class="w">2.45x</span></td><td class="n">2.44x</td><td>$41.67</td><td>$102.00</td><td>2</td><td>$62.50</td><td><span class="w">+$0</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$145</td><td style="font-weight:600">$459</td><td>5</td><td><span class="g">3.17x</span></td><td class="n">2.44x</td><td>$29.00</td><td>$91.80</td><td>3</td><td>$48.33</td><td><span class="g">+$43</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$158</td><td style="font-weight:600">$436</td><td>5</td><td><span class="g">2.76x</span></td><td class="n">2.44x</td><td>$31.60</td><td>$87.20</td><td>3</td><td>$52.67</td><td><span class="g">+$21</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$124</td><td style="font-weight:600">$307</td><td>3</td><td><span class="w">2.48x</span></td><td class="n">2.44x</td><td>$41.33</td><td>$102.33</td><td>2</td><td>$62.00</td><td><span class="g">+$2</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$124</td><td style="font-weight:600">$262</td><td>3</td><td><span class="r">2.11x</span></td><td class="n">2.44x</td><td>$41.33</td><td>$87.33</td><td>1</td><td>$124.00</td><td><span class="w">-$17</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$114</td><td style="font-weight:600">$293</td><td>3</td><td><span class="w">2.57x</span></td><td class="n">2.44x</td><td>$38.00</td><td>$97.67</td><td>2</td><td>$57.00</td><td><span class="g">+$6</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$126</td><td style="font-weight:600">$310</td><td>3</td><td><span class="w">2.46x</span></td><td class="n">2.44x</td><td>$42.00</td><td>$103.33</td><td>2</td><td>$63.00</td><td><span class="g">+$1</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$137</td><td style="font-weight:600">$407</td><td>4</td><td><span class="g">2.97x</span></td><td class="n">2.44x</td><td>$34.25</td><td>$101.75</td><td>2</td><td>$68.50</td><td><span class="g">+$30</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$145</td><td style="font-weight:600">$373</td><td>4</td><td><span class="w">2.57x</span></td><td class="n">2.44x</td><td>$36.25</td><td>$93.25</td><td>3</td><td>$48.33</td><td><span class="g">+$8</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+</tbody></table></div></div>
+<div class="client-daily-panel" id="daily-meliora">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">meliorahabitts</div>
+  <div class="daily-meta"><span class="badge active">active</span><span>·</span><span>BEROAS <strong style="color:var(--text)">1.67x</strong></span><span>·</span><span style="color:var(--green)">SCALE +20%</span></div>
+</div></div>
+<div class="daily-stats">
+  <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">21</div></div>
+  <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">$3.0k</div></div>
+  <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">$6.5k</div></div>
+  <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:var(--green)">2.17x</div></div>
+  <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">$50.69</div></div>
+  <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--amber)">12<span style="color:var(--text3);font-size:13px;font-weight:400">/21</span></div></div>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th><th class="sep">New</th><th>nCPA</th><th class="sep">Net Day</th><th>Notes</th></tr></thead>
+<tbody><tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-17</td><td>$138</td><td style="font-weight:600">$394</td><td>4</td><td><span class="g">2.86x</span></td><td class="n">1.67x</td><td>$34.50</td><td>$98.50</td><td>2</td><td>$69.00</td><td><span class="g">+$98</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-16</td><td>$149</td><td style="font-weight:600">$378</td><td>3</td><td><span class="g">2.54x</span></td><td class="n">1.67x</td><td>$49.67</td><td>$126.00</td><td>2</td><td>$74.50</td><td><span class="g">+$78</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-15</td><td>$100</td><td style="font-weight:600">$267</td><td>2</td><td><span class="g">2.67x</span></td><td class="n">1.67x</td><td>$50.00</td><td>$133.50</td><td>1</td><td>$100.00</td><td><span class="g">+$60</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-14</td><td>$108</td><td style="font-weight:600">$171</td><td>2</td><td><span class="r">1.58x</span></td><td class="n">1.67x</td><td>$54.00</td><td>$85.50</td><td>1</td><td>$108.00</td><td><span class="w">-$5</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-13</td><td>$161</td><td style="font-weight:600">$214</td><td>2</td><td><span class="r">1.33x</span></td><td class="n">1.67x</td><td>$80.50</td><td>$107.00</td><td>1</td><td>$161.00</td><td><span class="w">-$33</span></td><td style="color:var(--text3);font-size:11px">creative fatigue</td></tr>
+<tr class="day-break"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-12</td><td>$169</td><td style="font-weight:600">$256</td><td>2</td><td><span class="r">1.51x</span></td><td class="n">1.67x</td><td>$84.50</td><td>$128.00</td><td>1</td><td>$169.00</td><td><span class="w">-$15</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-11</td><td>$163</td><td style="font-weight:600">$474</td><td>4</td><td><span class="g">2.91x</span></td><td class="n">1.67x</td><td>$40.75</td><td>$118.50</td><td>2</td><td>$81.50</td><td><span class="g">+$121</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-10</td><td>$160</td><td style="font-weight:600">$237</td><td>2</td><td><span class="r">1.48x</span></td><td class="n">1.67x</td><td>$80.00</td><td>$118.50</td><td>1</td><td>$160.00</td><td><span class="w">-$18</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-09</td><td>$131</td><td style="font-weight:600">$393</td><td>4</td><td><span class="g">3.00x</span></td><td class="n">1.67x</td><td>$32.75</td><td>$98.25</td><td>3</td><td>$43.67</td><td><span class="g">+$105</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-08</td><td>$122</td><td style="font-weight:600">$166</td><td>2</td><td><span class="r">1.36x</span></td><td class="n">1.67x</td><td>$61.00</td><td>$83.00</td><td>1</td><td>$122.00</td><td><span class="w">-$22</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-07</td><td>$129</td><td style="font-weight:600">$338</td><td>3</td><td><span class="g">2.62x</span></td><td class="n">1.67x</td><td>$43.00</td><td>$112.67</td><td>2</td><td>$64.50</td><td><span class="g">+$74</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-06</td><td>$160</td><td style="font-weight:600">$231</td><td>2</td><td><span class="r">1.44x</span></td><td class="n">1.67x</td><td>$80.00</td><td>$115.50</td><td>1</td><td>$160.00</td><td><span class="w">-$21</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-05</td><td>$166</td><td style="font-weight:600">$205</td><td>2</td><td><span class="r">1.23x</span></td><td class="n">1.67x</td><td>$83.00</td><td>$102.50</td><td>1</td><td>$166.00</td><td><span class="w">-$43</span></td><td style="color:var(--text3);font-size:11px">creative fatigue</td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-04</td><td>$139</td><td style="font-weight:600">$405</td><td>4</td><td><span class="g">2.91x</span></td><td class="n">1.67x</td><td>$34.75</td><td>$101.25</td><td>2</td><td>$69.50</td><td><span class="g">+$104</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-03</td><td>$168</td><td style="font-weight:600">$470</td><td>4</td><td><span class="g">2.80x</span></td><td class="n">1.67x</td><td>$42.00</td><td>$117.50</td><td>3</td><td>$56.00</td><td><span class="g">+$114</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-02</td><td>$156</td><td style="font-weight:600">$232</td><td>2</td><td><span class="r">1.49x</span></td><td class="n">1.67x</td><td>$78.00</td><td>$116.00</td><td>1</td><td>$156.00</td><td><span class="w">-$17</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-03-01</td><td>$119</td><td style="font-weight:600">$317</td><td>3</td><td><span class="g">2.66x</span></td><td class="n">1.67x</td><td>$39.67</td><td>$105.67</td><td>2</td><td>$59.50</td><td><span class="g">+$71</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-loss"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-28</td><td>$114</td><td style="font-weight:600">$141</td><td>1</td><td><span class="r">1.24x</span></td><td class="n">1.67x</td><td>$114.00</td><td>$141.00</td><td>1</td><td>$114.00</td><td><span class="w">-$29</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-27</td><td>$182</td><td style="font-weight:600">$526</td><td>5</td><td><span class="g">2.89x</span></td><td class="n">1.67x</td><td>$36.40</td><td>$105.20</td><td>3</td><td>$60.67</td><td><span class="g">+$134</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-26</td><td>$127</td><td style="font-weight:600">$367</td><td>3</td><td><span class="g">2.89x</span></td><td class="n">1.67x</td><td>$42.33</td><td>$122.33</td><td>2</td><td>$63.50</td><td><span class="g">+$93</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+<tr class="day-profit"><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">2026-02-25</td><td>$130</td><td style="font-weight:600">$303</td><td>3</td><td><span class="g">2.33x</span></td><td class="n">1.67x</td><td>$43.33</td><td>$101.00</td><td>2</td><td>$65.00</td><td><span class="g">+$52</span></td><td style="color:var(--text3);font-size:11px"></td></tr>
+</tbody></table></div></div>
+
+</div>
+
+<!-- OFFER TRACKER -->
+<div class="main-panel" id="panel-offers">
+  <div class="client-tabs-bar"><button class="client-tab active" onclick="switchOfferTab('skiiwrld-offers',this)">SKIIWRLD</button>
+<button class="client-tab" onclick="switchOfferTab('savant-offers',this)">Savant Club</button>
+<button class="client-tab" onclick="switchOfferTab('balexandert-offers',this)">Balexandert</button>
+<button class="client-tab" onclick="switchOfferTab('sanity-offers',this)">Sanity</button>
+<button class="client-tab" onclick="switchOfferTab('noble-offers',this)">noblecollective</button>
+</div>
+  <div class="client-daily-panel active" id="skiiwrld-offers">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">SKIIWRLD — Offer Tracker</div>
+  <div class="daily-meta"><span class="iao-active-badge">Active: Free ship $75+</span></div>
+</div></div>
+<div class="iao-compare-grid">
+  <div class="iao-card best">
+    <div class="iao-card-header"><div><div class="iao-card-name">Free ship $75+</div><div class="iao-card-dates">2026-02-25 → active</div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="iao-active-badge">Active</span><span class="best-tag">Best Offer</span><span class="iao-days-badge">21 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--green)">4.26x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--green)">+$7.75</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$36.80</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$92.82</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">186</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$29.2k</div></div>
+    </div>
+  </div>
+  <div class="iao-card">
+    <div class="iao-card-header"><div><div class="iao-card-name">Previous offer</div><div class="iao-card-dates">2026-01-05 → 2026-02-24</div></div>
+    <div><span class="iao-days-badge">50 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--amber)">3.02x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$9.91</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$54.46</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$80.75</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">121</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$9.7k</div></div>
+    </div>
+  </div>
+</div></div>
+<div class="client-daily-panel" id="savant-offers">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">Savant Club — Offer Tracker</div>
+  <div class="daily-meta"><span class="iao-active-badge">Active: BOGO hats</span></div>
+</div></div>
+<div class="iao-compare-grid">
+  <div class="iao-card best">
+    <div class="iao-card-header"><div><div class="iao-card-name">BOGO hats</div><div class="iao-card-dates">2026-02-25 → active</div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="iao-active-badge">Active</span><span class="best-tag">Best Offer</span><span class="iao-days-badge">21 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--green)">3.14x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$6.22</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$41.62</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$80.46</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">90</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$11.7k</div></div>
+    </div>
+  </div>
+  <div class="iao-card">
+    <div class="iao-card-header"><div><div class="iao-card-name">Previous offer</div><div class="iao-card-dates">2026-01-05 → 2026-02-24</div></div>
+    <div><span class="iao-days-badge">50 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--amber)">2.23x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$26.2</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$61.60</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$70.00</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">58</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$4.0k</div></div>
+    </div>
+  </div>
+</div></div>
+<div class="client-daily-panel" id="balexandert-offers">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">Balexandert — Offer Tracker</div>
+  <div class="daily-meta"><span class="iao-active-badge">Active: 15% first order</span></div>
+</div></div>
+<div class="iao-compare-grid">
+  <div class="iao-card best">
+    <div class="iao-card-header"><div><div class="iao-card-name">15% first order</div><div class="iao-card-dates">2026-02-25 → active</div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="iao-active-badge">Active</span><span class="best-tag">Best Offer</span><span class="iao-days-badge">21 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--green)">3.26x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$3.82</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$43.53</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$86.32</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">107</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$15.2k</div></div>
+    </div>
+  </div>
+  <div class="iao-card">
+    <div class="iao-card-header"><div><div class="iao-card-name">Previous offer</div><div class="iao-card-dates">2026-01-05 → 2026-02-24</div></div>
+    <div><span class="iao-days-badge">50 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--amber)">2.31x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$24.71</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$64.42</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$75.10</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">70</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$5.2k</div></div>
+    </div>
+  </div>
+</div></div>
+<div class="client-daily-panel" id="sanity-offers">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">Sanity — Offer Tracker</div>
+  <div class="daily-meta"><span class="iao-active-badge">Active: Free gift $100+</span></div>
+</div></div>
+<div class="iao-compare-grid">
+  <div class="iao-card best">
+    <div class="iao-card-header"><div><div class="iao-card-name">Free gift $100+</div><div class="iao-card-dates">2026-02-25 → active</div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="iao-active-badge">Active</span><span class="best-tag">Best Offer</span><span class="iao-days-badge">21 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--green)">3.20x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--green)">+$1.45</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$53.77</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$106.20</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">69</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$11.9k</div></div>
+    </div>
+  </div>
+  <div class="iao-card">
+    <div class="iao-card-header"><div><div class="iao-card-name">Previous offer</div><div class="iao-card-dates">2026-01-05 → 2026-02-24</div></div>
+    <div><span class="iao-days-badge">50 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--amber)">2.27x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$24.36</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$79.58</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$92.39</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">45</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$4.1k</div></div>
+    </div>
+  </div>
+</div></div>
+<div class="client-daily-panel" id="noble-offers">
+<div class="daily-client-header"><div>
+  <div class="daily-client-name">noblecollective — Offer Tracker</div>
+  <div class="daily-meta"><span class="iao-active-badge">Active: Ship over $130</span></div>
+</div></div>
+<div class="iao-compare-grid">
+  <div class="iao-card best">
+    <div class="iao-card-header"><div><div class="iao-card-name">Ship over $130</div><div class="iao-card-dates">2026-02-25 → active</div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="iao-active-badge">Active</span><span class="best-tag">Best Offer</span><span class="iao-days-badge">21 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--green)">2.74x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$19.38</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$62.96</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$103.76</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">50</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$8.6k</div></div>
+    </div>
+  </div>
+  <div class="iao-card">
+    <div class="iao-card-header"><div><div class="iao-card-name">Previous offer</div><div class="iao-card-dates">2026-01-05 → 2026-02-24</div></div>
+    <div><span class="iao-days-badge">50 days</span></div></div>
+    <div class="iao-card-body">
+      <div><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:var(--amber)">1.95x</div></div>
+      <div><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:var(--red)">-$49.6</div></div>
+      <div><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">$93.18</div></div>
+      <div><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">$90.27</div></div>
+      <div><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">32</div></div>
+      <div><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">$2.9k</div></div>
+    </div>
+  </div>
+</div></div>
+
+</div>
+
+<!-- PASSWORDS -->
+<div class="main-panel" id="panel-passwords">
+  <div class="pw-wrap"><div class="pw-card"><table class="pw-table"><tr><th>Client</th><th>Status</th><th>Access Code</th></tr>
+<tr><td style="font-weight:600">SKIIWRLD</td><td><span class="badge scaling">scaling</span></td><td><span class="pw-code">SKI-7823</span></td></tr>
+<tr><td style="font-weight:600">Savant Club</td><td><span class="badge active">active</span></td><td><span class="pw-code">SAV-4411</span></td></tr>
+<tr><td style="font-weight:600">Balexandert</td><td><span class="badge active">active</span></td><td><span class="pw-code">BAL-7700</span></td></tr>
+<tr><td style="font-weight:600">Sanity</td><td><span class="badge active">active</span></td><td><span class="pw-code">SAN-3356</span></td></tr>
+<tr><td style="font-weight:600">noblecollective</td><td><span class="badge active">active</span></td><td><span class="pw-code">NOB-3312</span></td></tr>
+<tr><td style="font-weight:600">omniscent</td><td><span class="badge active">active</span></td><td><span class="pw-code">OMN-8821</span></td></tr>
+<tr><td style="font-weight:600">Failure.USA</td><td><span class="badge active">active</span></td><td><span class="pw-code">FAI-6614</span></td></tr>
+<tr><td style="font-weight:600">meliorahabitts</td><td><span class="badge active">active</span></td><td><span class="pw-code">MEL-2290</span></td></tr>
+<tr><td style="font-weight:600">sxlfmadeclothing</td><td><span class="badge testing">testing</span></td><td><span class="pw-code">SXL-4478</span></td></tr>
+<tr><td style="font-weight:600">unitaryproject</td><td><span class="badge testing">testing</span></td><td><span class="pw-code">UNI-9934</span></td></tr>
+<tr><td style="font-weight:600">rmbrthedays</td><td><span class="badge paused">paused</span></td><td><span class="pw-code">RMB-5523</span></td></tr>
+<tr><td style="font-weight:600">sanityfragments</td><td><span class="badge paused">paused</span></td><td><span class="pw-code">SFR-1156</span></td></tr>
+<tr><td style="font-weight:600">LLTY.US</td><td><span class="badge dead">dead</span></td><td><span class="pw-code">LLT-7742</span></td></tr>
+<tr><td style="font-weight:600">_888brand</td><td><span class="badge testing">testing</span></td><td><span class="pw-code">888-9901</span></td></tr>
+</table></div></div>
+  <div class="tip">Share each client's access code — they only see their own data.</div>
+</div>
+
+<script>
+function goTab(name, el) {
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+function switchDailyTab(id, el) {
+  document.querySelectorAll('#panel-daily .client-daily-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#daily-tabs .client-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('daily-' + id).classList.add('active');
+  el.classList.add('active');
+}
+function switchOfferTab(id, el) {
+  document.querySelectorAll('#panel-offers .client-daily-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#panel-offers .client-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

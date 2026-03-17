@@ -1,0 +1,3109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='19' fill='%23c8f060'/%3E%3Cpath d='M 23 73 L 23 27 L 50 58 L 77 27 L 77 73' fill='none' stroke='%230a0a0a' stroke-width='10' stroke-linecap='square' stroke-linejoin='miter'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metrik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0a;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;--bg5:#2a2a2a;
+  --text:#f0ede8;--text2:#8a8580;--text3:#4a4742;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);--border3:rgba(255,255,255,0.18);
+  --accent:#c8f060;--accent2:#a8d040;--accent-dim:rgba(200,240,96,0.08);--accent-dim2:rgba(200,240,96,0.15);
+  --green:#4ade80;--green-bg:rgba(74,222,128,0.1);--green-border:rgba(74,222,128,0.2);
+  --red:#f87171;--red-bg:rgba(248,113,113,0.1);--red-border:rgba(248,113,113,0.2);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,0.1);--amber-border:rgba(251,191,36,0.2);
+  --blue:#60a5fa;--blue-bg:rgba(96,165,250,0.1);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.1);
+  --radius:10px;--radius-lg:16px;--radius-xl:24px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.5);
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.screen{display:none;}.screen.active{display:block;}
+
+/* ── LOADING ── */
+.loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loading-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 1.2s infinite;}
+.loading-text{font-size:12px;color:var(--text3);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
+
+/* ── AUTH SCREENS ── */
+.auth-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:32px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(200,240,96,0.06) 0%,transparent 70%),var(--bg);}
+.auth-logo{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.auth-wordmark{font-size:13px;font-weight:600;letter-spacing:4px;color:var(--text2);text-transform:uppercase;}
+.auth-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.auth-box{width:100%;max-width:380px;background:var(--bg2);border-radius:var(--radius-xl);border:0.5px solid var(--border2);padding:36px;display:flex;flex-direction:column;gap:20px;box-shadow:var(--shadow-lg);}
+.auth-box h2{font-size:20px;font-weight:600;letter-spacing:-0.3px;}
+.auth-box p{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5;}
+.auth-field{display:flex;flex-direction:column;gap:6px;}
+.auth-field label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;}
+.auth-field input{padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);font-family:var(--font);font-size:13px;width:100%;outline:none;transition:border-color 0.15s;}
+.auth-field input:focus{border-color:var(--accent);}
+.auth-btn{padding:13px;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:opacity 0.15s,transform 0.1s;letter-spacing:0.2px;}
+.auth-btn:hover{opacity:0.9;}.auth-btn:active{transform:scale(0.99);}
+.auth-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.auth-error{font-size:11px;color:var(--red);min-height:14px;text-align:center;}
+.auth-switch{font-size:12px;color:var(--text2);text-align:center;}
+.auth-switch span{color:var(--accent);cursor:pointer;font-weight:500;}
+.auth-switch span:hover{text-decoration:underline;}
+.auth-divider{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:11px;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:0.5px;background:var(--border2);}
+
+/* ── CLIENT LOGIN (portal) ── */
+.portal-login-hint{font-size:11px;color:var(--text3);text-align:center;}
+
+/* ── TOP BAR ── */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:var(--bg2);border-bottom:0.5px solid var(--border);flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);}
+.top-bar-left{display:flex;align-items:center;gap:12px;}
+.top-wordmark{font-size:13px;font-weight:600;letter-spacing:3px;color:var(--text2);text-transform:uppercase;}
+.top-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.top-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.user-chip{font-size:11px;color:var(--text3);padding:4px 10px;border-radius:20px;border:0.5px solid var(--border2);font-family:var(--mono);}
+.live-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:var(--accent-dim);border:0.5px solid rgba(200,240,96,0.2);font-size:10px;font-weight:600;color:var(--accent);letter-spacing:0.3px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+
+/* ── MAIN NAV ── */
+.main-nav{display:flex;padding:0 20px;background:var(--bg2);border-bottom:0.5px solid var(--border);position:sticky;top:52px;z-index:40;overflow-x:auto;}
+.main-tab{padding:14px 16px;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);white-space:nowrap;transition:color 0.15s;letter-spacing:0.2px;}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.main-tab:hover:not(.active){color:var(--text);}
+.main-panel{display:none;}.main-panel.active{display:block;}
+
+/* ── BUTTONS ── */
+.btn{padding:7px 14px;border:0.5px solid var(--border2);background:transparent;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500;color:var(--text);font-family:var(--font);transition:background 0.15s,border-color 0.15s;white-space:nowrap;}
+.btn:hover{background:var(--bg3);border-color:var(--border3);}
+.btn.primary{background:var(--accent);color:#0a0a0a;border-color:transparent;font-weight:600;}
+.btn.primary:hover{opacity:0.9;}
+.btn.ghost{border-color:transparent;color:var(--text2);}
+.btn.ghost:hover{color:var(--text);background:var(--bg3);}
+.btn.sm{padding:5px 10px;font-size:11px;}
+.btn.danger{color:var(--red);border-color:var(--red-border);}
+.btn.danger:hover{background:var(--red-bg);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* ── SUMMARY BAR ── */
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;padding:16px 20px;border-bottom:0.5px solid var(--border);background:var(--bg);}
+.s-card{background:var(--bg2);border-radius:var(--radius-lg);padding:14px 16px;border:0.5px solid var(--border);transition:border-color 0.2s;}
+.s-card:hover{border-color:var(--border2);}
+.s-label{font-size:10px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;}
+.s-val{font-size:20px;font-weight:600;letter-spacing:-0.5px;line-height:1;}
+.s-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:8px;padding:12px 20px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;align-items:center;background:var(--bg);}
+.filter-bar input,.filter-bar select{padding:7px 11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--font);font-size:12px;outline:none;transition:border-color 0.15s;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--accent);}
+.filter-bar select option{background:var(--bg3);}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;width:100%;max-height:440px;overflow-y:auto;}
+.table-wrap::-webkit-scrollbar{width:4px;height:4px;}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+table{width:100%;border-collapse:collapse;}
+th{position:sticky;top:0;z-index:2;background:var(--bg3);padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text3);border-bottom:0.5px solid var(--border2);white-space:nowrap;letter-spacing:0.6px;text-transform:uppercase;}
+td{padding:10px 12px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;font-size:12px;}
+tbody tr{transition:background 0.1s;}
+tbody tr:hover td{background:var(--bg2);}
+.cell-edit{background:transparent;border:none;width:100%;min-width:55px;font-family:var(--font);font-size:12px;color:var(--text);cursor:pointer;outline:none;}
+.cell-edit:focus{background:var(--bg3);border-radius:6px;padding:2px 6px;outline:1px solid var(--accent);}
+.sep{border-left:1px solid var(--border2)!important;}
+.tip{font-size:11px;color:var(--text3);padding:8px 20px;border-top:0.5px solid var(--border);background:var(--bg);}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.3px;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;}
+.badge.active{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border);}
+.badge.active::before{background:var(--green);}
+.badge.paused{background:var(--amber-bg);color:var(--amber);border:0.5px solid var(--amber-border);}
+.badge.paused::before{background:var(--amber);}
+.badge.testing{background:var(--blue-bg);color:var(--blue);border:0.5px solid rgba(96,165,250,0.2);}
+.badge.testing::before{background:var(--blue);}
+.badge.dead{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border);}
+.badge.dead::before{background:var(--red);}
+.badge.scaling{background:var(--purple-bg);color:var(--purple);border:0.5px solid rgba(167,139,250,0.2);}
+.badge.scaling::before{background:var(--purple);}
+select.status-select{border:none;background:transparent;font-family:var(--font);font-size:10px;font-weight:600;cursor:pointer;outline:none;padding:3px 4px;border-radius:20px;color:inherit;}
+
+/* ── METRIC COLORS ── */
+.g{color:var(--green);font-weight:600;}
+.w{color:var(--amber);font-weight:600;}
+.r{color:var(--red);font-weight:600;}
+.n{color:var(--text2);}
+.bump-up{background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;border:0.5px solid var(--green-border);}
+.bump-down{background:var(--red-bg);color:var(--red);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;border:0.5px solid var(--red-border);}
+.hold{background:var(--bg3);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:500;border:0.5px solid var(--border2);}
+.icon-btn{width:26px;height:26px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);transition:all 0.15s;}
+.icon-btn:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
+.iao-tag{font-size:10px;font-weight:500;background:var(--accent-dim);color:var(--accent);padding:3px 9px;border-radius:20px;max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block;cursor:pointer;border:0.5px solid rgba(200,240,96,0.2);transition:background 0.15s;}
+.iao-tag:hover{background:var(--accent-dim2);}
+
+/* ── PASSWORDS ── */
+.pw-wrap{padding:20px;}
+.pw-card{background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;}
+.pw-table{width:100%;border-collapse:collapse;}
+.pw-table th{font-size:10px;font-weight:600;color:var(--text3);padding:10px 16px;border-bottom:0.5px solid var(--border2);text-align:left;background:var(--bg3);text-transform:uppercase;letter-spacing:0.6px;}
+.pw-table td{padding:12px 16px;border-bottom:0.5px solid var(--border);font-size:12px;}
+.pw-table tr:last-child td{border-bottom:none;}
+.pw-code{font-family:var(--mono);font-size:12px;font-weight:500;background:var(--bg3);color:var(--accent);padding:4px 10px;border-radius:8px;letter-spacing:1.5px;border:0.5px solid var(--border2);}
+.copy-btn{padding:4px 10px;border:0.5px solid var(--border2);background:var(--bg3);border-radius:8px;cursor:pointer;font-size:10px;font-weight:500;color:var(--text2);font-family:var(--font);transition:all 0.15s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+
+/* ── DAILY TRACKER ── */
+.client-tabs-bar{display:flex;padding:0 20px;border-bottom:0.5px solid var(--border);overflow-x:auto;background:var(--bg2);}
+.client-tab{padding:12px 16px;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);white-space:nowrap;flex-shrink:0;transition:color 0.15s;}
+.client-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.client-tab:hover:not(.active){color:var(--text);}
+.client-daily-panel{display:none;}.client-daily-panel.active{display:block;}
+.daily-client-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;gap:8px;background:var(--bg);}
+.daily-client-name{font-size:17px;font-weight:600;letter-spacing:-0.3px;}
+.daily-meta{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap;}
+.daily-meta span{font-size:11px;color:var(--text2);}
+.daily-meta-sep{color:var(--text3)!important;}
+.daily-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;padding:14px 20px;border-bottom:0.5px solid var(--border);background:var(--bg);}
+.ds-card{background:var(--bg2);border-radius:var(--radius-lg);padding:12px 14px;border:0.5px solid var(--border);text-align:center;transition:border-color 0.2s;}
+.ds-card:hover{border-color:var(--border2);}
+.ds-label{font-size:9px;font-weight:600;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.8px;}
+.ds-val{font-size:16px;font-weight:600;letter-spacing:-0.3px;}
+
+/* ── CUSTOM DATE PICKER ── */
+.add-day-bar{display:flex;gap:10px;padding:14px 20px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;align-items:flex-end;background:var(--bg2);}
+.field-group{display:flex;flex-direction:column;gap:5px;}
+.field-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;}
+.field-input{padding:8px 11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);font-family:var(--font);font-size:12px;outline:none;transition:border-color 0.15s;width:100px;}
+.field-input:focus{border-color:var(--accent);}
+.field-input.wide{width:130px;}
+.field-input.notes-input{width:140px;}
+.date-picker-wrap{position:relative;display:inline-block;}
+.date-display{padding:8px 11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;cursor:pointer;width:130px;display:flex;align-items:center;justify-content:space-between;gap:6px;transition:border-color 0.15s;user-select:none;}
+.date-display:hover,.date-display.open{border-color:var(--accent);}
+.date-display svg{flex-shrink:0;opacity:0.5;}
+.date-picker-dropdown{position:absolute;top:calc(100% + 6px);left:0;z-index:100;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:12px;width:240px;box-shadow:var(--shadow-lg);display:none;}
+.date-picker-dropdown.open{display:block;}
+.dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.dp-month-label{font-size:13px;font-weight:600;}
+.dp-nav{width:26px;height:26px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;transition:all 0.15s;}
+.dp-nav:hover{background:var(--bg4);color:var(--text);}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-day-name{font-size:9px;font-weight:600;color:var(--text3);text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:0.4px;}
+.dp-day{font-size:11px;font-weight:500;text-align:center;padding:5px 2px;border-radius:6px;cursor:pointer;color:var(--text2);transition:background 0.1s,color 0.1s;}
+.dp-day:hover{background:var(--bg4);color:var(--text);}
+.dp-day.today{color:var(--accent);font-weight:700;}
+.dp-day.selected{background:var(--accent);color:#0a0a0a;font-weight:700;}
+.dp-day.selected:hover{background:var(--accent2);}
+.dp-day.empty{cursor:default;}.dp-day.empty:hover{background:transparent;}
+
+/* ── DAY ROW COLORS ── */
+.day-profit td{background:rgba(74,222,128,0.04)!important;}
+.day-profit td:first-child{box-shadow:inset 3px 0 0 var(--green);}
+.day-loss td{background:rgba(248,113,113,0.04)!important;}
+.day-loss td:first-child{box-shadow:inset 3px 0 0 var(--red);}
+.day-break td{background:rgba(251,191,36,0.04)!important;}
+.day-break td:first-child{box-shadow:inset 3px 0 0 var(--amber);}
+
+/* ── IAO ── */
+.iao-section{padding:16px 20px;border-bottom:0.5px solid var(--border);}
+.iao-section h3{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.iao-add-bar{display:flex;gap:10px;padding:14px 20px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;align-items:flex-end;background:var(--bg2);}
+.iao-compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;padding:16px 20px;}
+.iao-card{background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;transition:border-color 0.2s;}
+.iao-card:hover{border-color:var(--border2);}
+.iao-card.best{border-color:rgba(200,240,96,0.3);background:rgba(200,240,96,0.03);}
+.iao-card-header{padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.iao-card-name{font-size:13px;font-weight:600;letter-spacing:-0.2px;}
+.iao-card-dates{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px;}
+.iao-card-body{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.iao-stat{display:flex;flex-direction:column;gap:2px;}
+.iao-stat-label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;}
+.iao-stat-val{font-size:15px;font-weight:600;letter-spacing:-0.3px;}
+.iao-active-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;background:var(--accent-dim);color:var(--accent);border:0.5px solid rgba(200,240,96,0.2);}
+.iao-active-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+.iao-days-badge{font-size:10px;color:var(--text3);padding:2px 7px;border-radius:4px;background:var(--bg3);border:0.5px solid var(--border2);}
+.best-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--accent-dim);color:var(--accent);border:0.5px solid rgba(200,240,96,0.2);letter-spacing:0.3px;}
+.iao-log-table{width:100%;border-collapse:collapse;}
+.iao-log-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text3);border-bottom:0.5px solid var(--border2);background:var(--bg3);text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap;}
+.iao-log-table td{padding:10px 14px;border-bottom:0.5px solid var(--border);font-size:12px;vertical-align:middle;}
+.iao-log-table tr:hover td{background:var(--bg2);}
+
+/* ── CLIENT PORTAL ── */
+.portal-wrap{min-height:100vh;background:var(--bg);}
+.portal-header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:58px;background:var(--bg2);border-bottom:0.5px solid var(--border);}
+.portal-brand-wrap{display:flex;flex-direction:column;gap:1px;}
+.portal-brand{font-size:9px;font-weight:600;letter-spacing:3px;color:var(--text3);text-transform:uppercase;}
+.portal-client-name{font-size:16px;font-weight:600;letter-spacing:-0.2px;color:var(--text);}
+.portal-logout{font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);transition:all 0.15s;}
+.portal-logout:hover{color:var(--text);border-color:var(--border3);}
+.portal-nav{display:flex;padding:0 24px;border-bottom:0.5px solid var(--border);background:var(--bg2);}
+.portal-tab{padding:14px 16px;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font);transition:color 0.15s;}
+.portal-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.portal-tab:hover:not(.active){color:var(--text);}
+.portal-panel{display:none;}.portal-panel.active{display:block;}
+.portal-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:20px 24px;border-bottom:0.5px solid var(--border);}
+.portal-section{padding:20px 24px;border-bottom:0.5px solid var(--border);}
+.portal-section h3{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.metric-card{background:var(--bg2);border-radius:var(--radius-lg);padding:14px 16px;border:0.5px solid var(--border);transition:border-color 0.2s;}
+.metric-card:hover{border-color:var(--border2);}
+.mc-label{font-size:10px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.6px;}
+.mc-val{font-size:20px;font-weight:600;letter-spacing:-0.4px;line-height:1;}
+.mc-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.detail-rows{background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:0.5px solid var(--border);font-size:12px;}
+.detail-row:last-child{border-bottom:none;}
+.dr-label{color:var(--text2);font-weight:500;}
+.dr-val{font-weight:600;font-family:var(--mono);font-size:11px;}
+.portal-notes{margin:0 24px 20px;padding:14px 16px;background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);font-size:12px;color:var(--text2);line-height:1.6;}
+.portal-notes strong{color:var(--accent);font-weight:600;}
+.portal-daily-table{width:100%;border-collapse:collapse;}
+.portal-daily-table th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text3);border-bottom:0.5px solid var(--border2);background:var(--bg3);text-transform:uppercase;letter-spacing:0.6px;}
+.portal-daily-table td{padding:10px 14px;border-bottom:0.5px solid var(--border);font-size:12px;}
+.empty-state{padding:40px 20px;text-align:center;color:var(--text3);font-size:13px;}
+.saving-indicator{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+.saving-dot{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:pulse 1s infinite;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+
+/* ── MOBILE RESPONSIVE ────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Top bar */
+  .top-bar{height:auto;padding:10px 14px;flex-wrap:wrap;gap:8px;}
+  .top-actions{gap:4px;}
+  .top-actions .btn{padding:5px 8px;font-size:10px;}
+  .user-chip{display:none;}
+  .live-badge{font-size:9px;padding:2px 7px;}
+
+  /* Main nav — scrollable */
+  .main-nav{top:auto;padding:0 10px;}
+  .main-tab{padding:10px 10px;font-size:11px;}
+
+  /* Hide tables on mobile, show cards instead */
+  .table-wrap{display:none;}
+  .mobile-cards{display:flex;flex-direction:column;gap:10px;padding:12px 14px;}
+
+  /* Summary bar — 2 cols on mobile */
+  .summary-bar{grid-template-columns:repeat(2,1fr);gap:8px;padding:10px 14px;}
+  .s-val{font-size:17px;}
+
+  /* Filter bar */
+  .filter-bar{padding:8px 14px;gap:6px;}
+  .filter-bar input{width:100%!important;}
+  .filter-bar select{width:100%;}
+
+  /* Tip */
+  .tip{font-size:10px;padding:6px 14px;}
+
+  /* Daily tracker */
+  .add-day-bar{padding:10px 14px;gap:8px;}
+  .field-input{width:85px;}
+  .field-input.notes-input{width:100px;}
+  .daily-stats{grid-template-columns:repeat(2,1fr);padding:10px 14px;gap:8px;}
+  .ds-val{font-size:14px;}
+  .daily-client-header{padding:12px 14px;}
+  .daily-client-name{font-size:15px;}
+
+  /* Client tabs */
+  .client-tabs-bar{padding:0 14px;}
+  .client-tab{padding:10px 11px;font-size:11px;}
+
+  /* IAO */
+  .iao-compare-grid{grid-template-columns:1fr;padding:12px 14px;}
+  .iao-add-bar{padding:10px 14px;}
+  .iao-section{padding:12px 14px;}
+
+  /* Passwords */
+  .pw-wrap{padding:12px 14px;}
+  .pw-table td,.pw-table th{padding:8px 10px;font-size:11px;}
+
+  /* Portal */
+  .portal-header{padding:0 16px;height:auto;padding-top:12px;padding-bottom:12px;}
+  .portal-client-name{font-size:14px;}
+  .portal-nav{padding:0 14px;}
+  .portal-tab{padding:10px 11px;font-size:11px;}
+  .portal-summary{grid-template-columns:repeat(2,1fr);padding:12px 14px;gap:8px;}
+  .portal-section{padding:12px 14px;}
+  .metric-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .mc-val{font-size:17px;}
+  .portal-notes{margin:0 14px 14px;}
+
+  /* Auth */
+  .auth-box{padding:24px 20px;}
+  .auth-box h2{font-size:18px;}
+}
+
+@media (max-width: 480px) {
+  .summary-bar{grid-template-columns:repeat(2,1fr);}
+  .metric-grid{grid-template-columns:1fr 1fr;}
+  .portal-summary{grid-template-columns:1fr 1fr;}
+  .add-day-bar{flex-direction:column;align-items:stretch;}
+  .add-day-bar .field-group{width:100%;}
+  .field-input,.field-input.notes-input,.field-input.wide{width:100%!important;}
+  .date-display{width:100%!important;}
+  .add-day-bar .btn{width:100%;}
+  .daily-stats{grid-template-columns:repeat(2,1fr);}
+  .iao-card-body{grid-template-columns:1fr 1fr;}
+  .top-wordmark{font-size:11px;letter-spacing:2px;}
+}
+
+/* ── DATE RANGE SELECTOR ─────────────────────────────────────────────────── */
+.date-range-bar{
+  display:flex;align-items:center;gap:8px;padding:10px 20px;
+  border-bottom:0.5px solid var(--border);background:var(--bg2);
+  flex-wrap:wrap;
+}
+.period-btn{
+  padding:5px 12px;border:0.5px solid var(--border2);border-radius:20px;
+  background:transparent;color:var(--text2);font-family:var(--font);
+  font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;
+  white-space:nowrap;
+}
+.period-btn:hover{color:var(--text);border-color:var(--border3);}
+.period-btn.active{background:var(--accent);color:#0a0a0a;border-color:transparent;font-weight:700;}
+.period-label{
+  font-size:10px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:0.6px;margin-right:4px;
+}
+.period-dates{
+  font-size:10px;color:var(--text3);font-family:var(--mono);
+  padding:4px 10px;border-radius:20px;background:var(--bg3);
+  border:0.5px solid var(--border);
+}
+.period-compare{
+  display:flex;align-items:center;gap:6px;margin-left:auto;
+}
+.compare-toggle{
+  padding:5px 12px;border:0.5px solid var(--border2);border-radius:20px;
+  background:transparent;color:var(--text2);font-family:var(--font);
+  font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;
+}
+.compare-toggle.active{background:var(--purple-bg);color:var(--purple);border-color:rgba(167,139,250,0.3);}
+
+/* month tabs */
+.month-tabs-bar{
+  display:flex;gap:4px;padding:8px 20px;border-bottom:0.5px solid var(--border);
+  overflow-x:auto;background:var(--bg);flex-wrap:nowrap;
+}
+.month-tab{
+  padding:4px 12px;border:0.5px solid var(--border2);border-radius:20px;
+  background:transparent;color:var(--text2);font-family:var(--mono);
+  font-size:10px;font-weight:500;cursor:pointer;transition:all 0.15s;
+  white-space:nowrap;flex-shrink:0;
+}
+.month-tab:hover{color:var(--text);border-color:var(--border3);}
+.month-tab.active{background:var(--bg3);color:var(--text);border-color:var(--border3);font-weight:700;}
+
+/* comparison banner */
+.compare-banner{
+  display:none;padding:8px 20px;background:var(--purple-bg);
+  border-bottom:0.5px solid rgba(167,139,250,0.2);
+  font-size:11px;color:var(--purple);
+}
+.compare-banner.visible{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.compare-chip{
+  padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;
+  background:rgba(167,139,250,0.15);color:var(--purple);
+}
+.delta-up{color:var(--green);font-weight:700;}
+.delta-down{color:var(--red);font-weight:700;}
+.delta-flat{color:var(--text3);}
+
+@media(max-width:768px){
+  .date-range-bar{padding:8px 14px;gap:6px;}
+  .period-compare{margin-left:0;width:100%;}
+  .month-tabs-bar{padding:6px 14px;}
+}
+
+
+
+/* ── DATE RANGE PICKER ───────────────────────────────────────────────── */
+.dr-bar{display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:0.5px solid var(--border);background:var(--bg2);}
+.dr-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 13px;border:0.5px solid var(--border2);
+  border-radius:var(--radius);background:var(--bg3);
+  color:var(--text);font-family:var(--font);font-size:12px;
+  font-weight:500;cursor:pointer;transition:border-color 0.15s;
+  user-select:none;
+}
+.dr-btn:hover{border-color:var(--border3);}
+.dr-btn.open{border-color:var(--accent);}
+.dr-btn-label{font-weight:600;}
+.dr-btn-range{color:var(--text2);font-family:var(--mono);font-size:11px;}
+.dr-btn-arrow{opacity:0.4;transition:transform 0.15s;flex-shrink:0;}
+.dr-btn.open .dr-btn-arrow{transform:rotate(180deg);}
+.dr-anchor{position:relative;display:inline-block;}
+.dr-dropdown{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:300;
+  background:var(--bg2);border:0.5px solid var(--border2);
+  border-radius:var(--radius-lg);box-shadow:0 12px 48px rgba(0,0,0,0.7);
+  display:none;flex-direction:row;overflow:hidden;width:620px;
+}
+.dr-dropdown.show{display:flex;}
+.dr-left{
+  width:160px;flex-shrink:0;background:var(--bg3);
+  border-right:0.5px solid var(--border);padding:8px 0;
+  overflow-y:auto;
+}
+.dr-preset-item{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px;font-size:12px;font-weight:500;
+  color:var(--text2);cursor:pointer;transition:all 0.1s;
+  white-space:nowrap;
+}
+.dr-preset-item:hover{background:var(--bg4);color:var(--text);}
+.dr-preset-item.sel{color:var(--accent);background:var(--accent-dim);}
+.dr-dot{
+  width:13px;height:13px;border-radius:50%;
+  border:1.5px solid var(--border2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.1s;
+}
+.dr-preset-item.sel .dr-dot{background:var(--accent);border-color:var(--accent);}
+.dr-preset-item.sel .dr-dot::after{content:'';width:4px;height:4px;border-radius:50%;background:#0a0a0a;}
+.dr-right{flex:1;display:flex;flex-direction:column;min-width:0;}
+.dr-cals{display:flex;gap:0;padding:14px 14px 10px;}
+.dr-cal{flex:1;min-width:0;}
+.dr-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.dr-cal-nav{
+  width:26px;height:26px;border:0.5px solid var(--border2);
+  border-radius:7px;background:transparent;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text2);font-size:15px;line-height:1;
+  transition:all 0.1s;
+}
+.dr-cal-nav:hover{background:var(--bg4);color:var(--text);}
+.dr-cal-nav.ghost{visibility:hidden;}
+.dr-cal-title{font-size:12px;font-weight:600;}
+.dr-cal-sep{width:1px;background:var(--border);margin:0 10px;flex-shrink:0;}
+.dr-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+.dr-dn{font-size:9px;font-weight:600;color:var(--text3);text-align:center;padding:3px 0;text-transform:uppercase;letter-spacing:0.4px;}
+.dr-d{
+  font-size:11px;text-align:center;padding:5px 1px;
+  border-radius:5px;cursor:pointer;color:var(--text2);
+  transition:background 0.08s,color 0.08s;font-weight:500;
+}
+.dr-d:hover:not(.dr-d-empty):not(.dr-d-other){background:var(--bg5);color:var(--text);}
+.dr-d-other{color:var(--text3);cursor:default;}
+.dr-d-today{color:var(--accent);font-weight:700;}
+.dr-d-start,.dr-d-end{background:var(--accent)!important;color:#0a0a0a!important;font-weight:700;border-radius:5px;}
+.dr-d-start:not(.dr-d-end){border-radius:5px 0 0 5px;}
+.dr-d-end:not(.dr-d-start){border-radius:0 5px 5px 0;}
+.dr-d-in{background:rgba(200,240,96,0.11);color:var(--text);border-radius:0;}
+.dr-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-top:0.5px solid var(--border);
+  background:var(--bg3);gap:8px;flex-wrap:wrap;
+}
+.dr-foot-dates{display:flex;align-items:center;gap:6px;}
+.dr-fin{
+  padding:5px 8px;border:0.5px solid var(--border2);border-radius:7px;
+  background:var(--bg2);color:var(--text);font-family:var(--mono);
+  font-size:11px;width:100px;outline:none;transition:border-color 0.15s;
+}
+.dr-fin:focus{border-color:var(--accent);}
+.dr-compare-row{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 14px;border-top:0.5px solid var(--border);
+  background:var(--bg3);font-size:12px;color:var(--text2);cursor:pointer;
+}
+.dr-chk{
+  width:15px;height:15px;border:1.5px solid var(--border2);
+  border-radius:4px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;transition:all 0.1s;
+}
+.dr-chk.on{background:var(--accent);border-color:var(--accent);}
+.dr-chk.on::after{content:'✓';font-size:9px;color:#0a0a0a;font-weight:700;}
+/* compare banner */
+.compare-banner{display:none;padding:8px 20px;background:var(--purple-bg);border-bottom:0.5px solid rgba(167,139,250,0.2);font-size:11px;color:var(--purple);}
+.compare-banner.visible{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.compare-chip{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(167,139,250,0.15);color:var(--purple);}
+.delta-up{color:var(--green);font-weight:700;}
+.delta-down{color:var(--red);font-weight:700;}
+/* month tabs */
+.month-tabs-bar{display:flex;gap:4px;padding:8px 20px;border-bottom:0.5px solid var(--border);overflow-x:auto;background:var(--bg);}
+.month-tab{padding:4px 12px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);font-family:var(--mono);font-size:10px;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0;}
+.month-tab:hover{color:var(--text);border-color:var(--border3);}
+.month-tab.active{background:var(--bg3);color:var(--text);border-color:var(--border3);font-weight:700;}
+@media(max-width:768px){
+  .dr-bar{padding:8px 14px;}
+  .dr-dropdown{width:calc(100vw - 20px);flex-direction:column;left:0!important;}
+  .dr-left{width:100%;border-right:none;border-bottom:0.5px solid var(--border);display:flex;flex-wrap:wrap;padding:4px 8px;}
+  .dr-preset-item{padding:5px 8px;font-size:11px;}
+  .dr-cals{flex-direction:column;padding:10px;}
+  .dr-cal-sep{display:none;}
+  .month-tabs-bar{padding:6px 14px;}
+}
+
+/* ── ADD CLIENT MODAL ───────────────────────────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:9999;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.show{display:flex;}
+.modal-backdrop{
+  position:absolute;inset:0;background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(4px);
+}
+.modal{position:relative;z-index:10000;}
+.modal{
+  background:var(--bg2);border:0.5px solid var(--border2);
+  border-radius:var(--radius-xl);width:100%;max-width:480px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.7);overflow:hidden;
+}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 22px;border-bottom:0.5px solid var(--border);
+}
+.modal-header h3{font-size:15px;font-weight:600;letter-spacing:-0.2px;}
+.modal-close{
+  width:28px;height:28px;border:0.5px solid var(--border2);border-radius:8px;
+  background:transparent;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;color:var(--text2);font-size:16px;
+  transition:all 0.15s;
+}
+.modal-close:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
+.modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:14px;}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-field{display:flex;flex-direction:column;gap:6px;}
+.modal-field.full{grid-column:1/-1;}
+.modal-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;}
+.modal-input{
+  padding:9px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg3);color:var(--text);font-family:var(--font);font-size:13px;
+  outline:none;transition:border-color 0.15s;width:100%;
+}
+.modal-input:focus{border-color:var(--accent);}
+.modal-select{
+  padding:9px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg3);color:var(--text);font-family:var(--font);font-size:13px;
+  outline:none;transition:border-color 0.15s;width:100%;cursor:pointer;
+}
+.modal-select:focus{border-color:var(--accent);}
+.modal-select option{background:var(--bg3);}
+.modal-hint{font-size:10px;color:var(--text3);margin-top:-8px;}
+.modal-footer{
+  display:flex;gap:8px;justify-content:flex-end;
+  padding:14px 22px;border-top:0.5px solid var(--border);
+  background:var(--bg3);
+}
+.modal-code-preview{
+  font-family:var(--mono);font-size:11px;color:var(--accent);
+  background:var(--bg3);padding:4px 10px;border-radius:6px;
+  border:0.5px solid var(--border2);letter-spacing:1px;
+}
+@media(max-width:480px){
+  .modal-row{grid-template-columns:1fr;}
+  .modal{margin:10px;}
+}
+
+/* ── TIPS ───────────────────────────────────────────────────────────────── */
+.tips-wrap{display:flex;flex-direction:column;gap:6px;padding:12px 20px;border-bottom:0.5px solid var(--border);background:var(--bg);}
+.tip-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--radius-lg);border:0.5px solid;font-size:12px;line-height:1.5;}
+.tip-row.critical{background:rgba(248,113,113,0.06);border-color:rgba(248,113,113,0.2);color:var(--text);}
+.tip-row.warning{background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.2);color:var(--text);}
+.tip-row.success{background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.2);color:var(--text);}
+.tip-row.info{background:var(--bg2);border-color:var(--border2);color:var(--text2);}
+.tip-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.tip-text{flex:1;}
+.tips-header{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;}
+.portal-tips{padding:16px 24px;border-bottom:0.5px solid var(--border);}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="screen active" id="screen-loading">
+  <div class="loading-screen">
+    <div class="loading-dot"></div>
+    <div class="loading-text">Loading Metrik...</div>
+  </div>
+</div>
+
+<!-- AGENCY SIGN UP -->
+<div class="screen" id="screen-signup">
+  <div class="auth-wrap">
+    <div class="auth-logo"><div class="auth-dot"></div><div class="auth-wordmark">Metrik</div></div>
+    <div class="auth-box">
+      <div><h2>Create your account</h2><p>Set up your Metrik account. Takes 30 seconds.</p></div>
+      <div class="auth-field"><label>Agency name</label><input type="text" id="signup-agency" placeholder="e.g. Acme Media"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="you@youragency.com"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="signup-password" placeholder="Min 8 characters"></div>
+      <button class="auth-btn" id="signup-btn" onclick="signUp()">Create account</button>
+      <div class="auth-error" id="signup-error"></div>
+      <div class="auth-switch">Already have an account? <span onclick="showScreen('screen-login-agency')">Sign in</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENCY SIGN IN -->
+<div class="screen" id="screen-login-agency">
+  <div class="auth-wrap">
+    <div class="auth-logo"><div class="auth-dot"></div><div class="auth-wordmark">Metrik</div></div>
+    <div class="auth-box">
+      <div><h2>Welcome back</h2><p>Sign in to your Metrik dashboard.</p></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="you@youragency.com" onkeydown="if(event.key==='Enter')signIn()"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="login-password" placeholder="Your password" onkeydown="if(event.key==='Enter')signIn()"></div>
+      <button class="auth-btn" id="login-btn" onclick="signIn()">Sign in</button>
+      <div class="auth-error" id="login-error"></div>
+      <div class="auth-divider">or</div>
+      <div class="auth-switch">Client? <span onclick="showScreen('screen-login-client')">Enter your client access code</span></div>
+      <div class="auth-switch">No account? <span onclick="showScreen('screen-signup')">Create one</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT LOGIN -->
+<div class="screen" id="screen-login-client">
+  <div class="auth-wrap">
+    <div class="auth-logo"><div class="auth-dot"></div><div class="auth-wordmark">Metrik</div></div>
+    <div class="auth-box">
+      <div><h2>Client portal</h2><p>Enter the access code provided by your agency.</p></div>
+      <div class="auth-field"><label>Access code</label><input type="password" id="client-code" placeholder="e.g. MCX-1234" onkeydown="if(event.key==='Enter')clientLogin()"></div>
+      <button class="auth-btn" id="client-login-btn" onclick="clientLogin()">Access dashboard</button>
+      <div class="auth-error" id="client-error"></div>
+      <div class="auth-switch">Agency? <span onclick="showScreen('screen-login-agency')">Sign in here</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENCY DASHBOARD -->
+<div class="screen" id="screen-agency">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="top-dot"></div>
+      <div class="top-wordmark">Metrik</div>
+      <div style="font-size:11px;color:var(--text3);padding:2px 8px;border-radius:4px;background:var(--bg3);border:0.5px solid var(--border);font-weight:500;" id="agency-name-chip"></div>
+      <div class="live-badge"><div class="live-dot"></div>Live</div>
+      <div class="saving-indicator" id="saving-indicator" style="display:none"><div class="saving-dot"></div>Saving...</div>
+    </div>
+    <div class="top-actions">
+      <div class="user-chip" id="user-email-chip"></div>
+      <button class="btn ghost sm" onclick="showClientLoginFromAgency()">Client view</button>
+      <button class="btn sm" onclick="addClient()">+ Add client</button>
+      <button class="btn primary sm" onclick="exportCSV()">Export CSV</button>
+      <button class="btn ghost sm" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+  <div class="main-nav">
+    <button class="main-tab active" id="mtab-overview"      onclick="goTab('overview',this)">Overview</button>
+    <button class="main-tab"        id="mtab-acquisition"   onclick="goTab('acquisition',this)">Acquisition</button>
+    <button class="main-tab"        id="mtab-profitability" onclick="goTab('profitability',this)">Profitability</button>
+    <button class="main-tab"        id="mtab-daily"         onclick="goTab('daily',this)">Daily Tracker</button>
+    <button class="main-tab"        id="mtab-iao"           onclick="goTab('iao',this)">Offer Tracker</button>
+    <button class="main-tab"        id="mtab-passwords"     onclick="goTab('passwords',this)">Passwords</button>
+  </div>
+
+  <!-- DATE RANGE BAR -->
+  <div class="dr-bar">
+    <div class="dr-anchor" id="dr-anchor">
+      <div class="dr-btn" id="dr-btn" onclick="drToggle(event)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="dr-btn-label" id="dr-lbl">Last 7 days</span>
+        <span class="dr-btn-range" id="dr-range"></span>
+        <svg class="dr-btn-arrow" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="dr-dropdown" id="dr-dd">
+        <div class="dr-left" id="dr-presets"></div>
+        <div class="dr-right">
+          <div class="dr-cals">
+            <div class="dr-cal" id="dr-cal-l"></div>
+            <div class="dr-cal-sep"></div>
+            <div class="dr-cal" id="dr-cal-r"></div>
+          </div>
+          <div class="dr-compare-row" onclick="drToggleCompare()">
+            <div class="dr-chk" id="dr-chk"></div>
+            <span>Compare to previous period</span>
+          </div>
+          <div class="dr-foot">
+            <div class="dr-foot-dates">
+              <input class="dr-fin" id="dr-fin-s" placeholder="YYYY-MM-DD">
+              <span style="color:var(--text3)">–</span>
+              <input class="dr-fin" id="dr-fin-e" placeholder="YYYY-MM-DD">
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn ghost sm" onclick="drClose()">Cancel</button>
+              <button class="btn primary sm" onclick="drApply()">Update</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- MONTH TABS  <!-- MONTH TABS (shows months that have data) -->
+  <div class="month-tabs-bar" id="month-tabs-bar" style="display:none"></div>
+
+  <!-- COMPARE BANNER -->
+  <div class="compare-banner" id="compare-banner"></div>
+
+
+  <div class="main-panel active" id="agency-overview">
+    <div class="summary-bar" id="summary-bar"></div>
+    <div class="filter-bar">
+      <input type="text" id="search" placeholder="Search clients..." oninput="renderAll()" style="width:160px;">
+      <select id="status-filter" onchange="renderAll()">
+        <option value="">All statuses</option>
+        <option value="active">Active</option>
+        <option value="scaling">Scaling</option>
+        <option value="testing">Testing</option>
+        <option value="paused">Paused</option>
+        <option value="dead">Dead</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Client</th><th>Status</th><th>Offer</th>
+        <th class="sep">ROAS</th><th>BEROAS</th><th>MER</th><th>aMER</th>
+        <th class="sep">CPA</th><th>BECPA</th>
+        <th class="sep">$/day</th><th>Mo. Spend</th><th>Revenue</th><th>AOV</th><th>GM%</th>
+        <th class="sep">Commission</th><th>Forecast</th><th>Action</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody id="overview-body"></tbody>
+    </table></div>
+    <div class="tip">Revenue & spend auto-calculate from Daily Tracker · Click any value to edit · Green = above breakeven · Red = below</div>
+  </div>
+
+  <div class="main-panel" id="agency-acquisition">
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Client</th><th>Status</th>
+        <th class="sep"># New Orders</th><th>$ New Rev</th><th>nAOV</th><th>nCPA</th><th>BECPA</th><th>Offer Profit</th>
+        <th class="sep"># Return Orders</th><th>$ Return Rev</th><th>rAOV</th>
+        <th class="sep">% NCRed</th><th>CAC</th><th>BECAC</th><th>CALC</th>
+      </tr></thead>
+      <tbody id="acq-body"></tbody>
+    </table></div>
+    <div class="tip">All values auto-calculated from Daily Tracker entries</div>
+  </div>
+
+  <div class="main-panel" id="agency-profitability">
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Client</th><th>Status</th>
+        <th class="sep">COGS ($)</th><th>COGS GP%</th><th>GPM%</th><th>Weighted GPM</th>
+        <th class="sep">Mo. OpEx</th><th>Other Fees</th><th>Total Costs</th>
+        <th class="sep">Gross Profit</th><th>Net Profit</th><th>Net Margin</th><th>Commission</th><th>Client Net</th>
+      </tr></thead>
+      <tbody id="profit-body"></tbody>
+    </table></div>
+    <div class="tip">Revenue flows from Daily Tracker · COGS, OpEx, Fees — click to edit</div>
+  </div>
+
+  <div class="main-panel" id="agency-daily">
+    <div class="client-tabs-bar" id="daily-client-tabs"></div>
+    <div id="daily-client-panels"></div>
+  </div>
+
+  <div class="main-panel" id="agency-iao">
+    <div class="client-tabs-bar" id="iao-client-tabs-bar"></div>
+    <div id="iao-client-panels"></div>
+  </div>
+
+  <div class="main-panel" id="agency-passwords">
+    <div class="pw-wrap"><div class="pw-card"><table class="pw-table" id="pw-table"></table></div></div>
+    <div class="tip">Share each client's access code — they only see their own data.</div>
+  </div>
+</div>
+
+<!-- CLIENT PORTAL -->
+<div class="screen" id="screen-portal">
+  <div class="portal-wrap">
+    <div class="portal-header">
+      <div class="portal-brand-wrap">
+        <div class="portal-brand">Metrik</div>
+        <div class="portal-client-name" id="portal-client-name"></div>
+      </div>
+      <span class="portal-logout" onclick="clientLogout()">Sign out</span>
+    </div>
+    <div class="portal-nav">
+      <button class="portal-tab active" onclick="switchPortalTab('overview',this)">Overview</button>
+      <button class="portal-tab" onclick="switchPortalTab('daily',this)">Daily Log</button>
+      <button class="portal-tab" onclick="switchPortalTab('allmetrics',this)">All Metrics</button>
+    </div>
+    <div class="portal-panel active" id="portal-overview">
+      <div class="portal-summary" id="portal-summary"></div>
+      <div class="portal-section"><h3>Ad Performance</h3><div class="metric-grid" id="portal-adperf"></div></div>
+      <div class="portal-section"><h3>Customer Breakdown</h3><div class="metric-grid" id="portal-customers"></div></div>
+      <div class="portal-section"><h3>Profitability</h3><div class="metric-grid" id="portal-profit-cards"></div></div>
+      <div class="portal-tips portal-section" id="portal-tips" style="display:none"></div>
+      <div class="portal-notes" id="portal-notes"></div>
+    </div>
+    <div class="portal-panel" id="portal-daily">
+      <div class="portal-section">
+        <h3>Daily Performance Log</h3>
+        <div style="overflow-x:auto;background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);">
+          <table class="portal-daily-table" id="portal-daily-table"></table>
+        </div>
+      </div>
+    </div>
+    <div class="portal-panel" id="portal-allmetrics">
+      <div class="portal-section"><h3>All Metrics</h3><div id="portal-all"></div></div>
+    </div>
+  </div>
+  <div style="padding:20px 24px;border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);"></div>
+      <span style="font-size:11px;font-weight:600;letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Metrik</span>
+    </div>
+    <span style="font-size:10px;color:var(--text3);">usemetrik.app</span>
+  </div>
+</div>
+</div>
+
+<script>
+// ── SUPABASE INIT ─────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://qjikrfpojyubzxnfdcsl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_r0CPxDcu-i7WgX_WvwdQaQ_9wWmWn8L';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let currentUser = null;
+let currentAgencyId = null;
+let currentAgencyName = null;
+let clients = [];
+let dailyEntries = [];
+let iaoLog = [];
+let budgetChanges = []; // { id, clientId, date, action, pct, prevBudget, newBudget }
+let loggedInClientPortal = null; // for client portal view
+let saving = false;
+
+const STATUSES = ['active','paused','scaling','testing','dead'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadAgency();
+    await loadAllData();
+    document.getElementById('user-email-chip').textContent = currentUser.email;
+    showScreen('screen-agency');
+    renderAll();
+  } else {
+    showScreen('screen-login-agency');
+  }
+}
+
+async function loadAgency() {
+  try {
+    // get agency_id from agency_users
+    const { data: au, error: aue } = await sb.from('agency_users').select('agency_id').eq('user_id', currentUser.id).single();
+    if (aue || !au) {
+      // agency_users row might be missing — try to create it
+      console.warn('agency_users not found, attempting repair...');
+      await repairAgencyUser();
+      return;
+    }
+    currentAgencyId = au.agency_id;
+    // get agency name — use maybeSingle to avoid error if RLS blocks
+    const { data: ag } = await sb.from('agencies').select('name').eq('id', currentAgencyId).maybeSingle();
+    if (ag) {
+      currentAgencyName = ag.name;
+      const chip = document.getElementById('agency-name-chip');
+      if (chip) chip.textContent = ag.name;
+    } else {
+      // fallback to email prefix
+      currentAgencyName = currentUser.email.split('@')[0];
+      const chip = document.getElementById('agency-name-chip');
+      if (chip) chip.textContent = currentAgencyName;
+    }
+  } catch(e) {
+    console.error('loadAgency error:', e);
+  }
+}
+
+async function repairAgencyUser() {
+  try {
+    // check if agency exists for this email
+    const { data: ag } = await sb.from('agencies').select('id').eq('email', currentUser.email).maybeSingle();
+    if (ag) {
+      // agency exists, just missing agency_users row
+      await sb.from('agency_users').insert({ user_id: currentUser.id, agency_id: ag.id });
+      currentAgencyId = ag.id;
+    } else {
+      // create agency and link
+      const { data: newAg } = await sb.from('agencies').insert({
+        email: currentUser.email,
+        name: currentUser.user_metadata?.agency_name || currentUser.email.split('@')[0]
+      }).select().single();
+      if (newAg) {
+        await sb.from('agency_users').insert({ user_id: currentUser.id, agency_id: newAg.id });
+        currentAgencyId = newAg.id;
+        currentAgencyName = newAg.name;
+      }
+    }
+  } catch(e) {
+    console.error('repairAgencyUser error:', e);
+  }
+}
+
+async function loadAllData() {
+  if (!currentAgencyId) return;
+  const ids = await getClientIds();
+  const [c, d, i, b] = await Promise.all([
+    sb.from('clients').select('*').eq('agency_id', currentAgencyId).order('created_at'),
+    sb.from('daily_entries').select('*').in('client_id', ids).order('date'),
+    sb.from('iao_log').select('*').in('client_id', ids).order('start_date'),
+    sb.from('budget_changes').select('*').in('client_id', ids).order('date'),
+  ]);
+  clients = (c.data || []).map(mapClient);
+  dailyEntries = (d.data || []).map(mapEntry);
+  iaoLog = (i.data || []).map(mapIao);
+  budgetChanges = (b.data || []).map(mapBudgetChange);
+}
+
+async function getClientIds() {
+  if (!currentAgencyId) return [];
+  const { data } = await sb.from('clients').select('id').eq('agency_id', currentAgencyId);
+  return (data || []).map(x => x.id);
+}
+
+function mapClient(r) {
+  return { id: r.id, name: r.name, password: r.password, status: r.status,
+           aov: r.aov, margin: r.margin, cogs: r.cogs, opex: r.opex,
+           fees: r.fees, iao: r.iao, notes: r.notes,
+           commissionRate: r.commission_rate ?? 10 };
+}
+function mapEntry(r) {
+  return { id: r.id, clientId: r.client_id, date: r.date, spend: r.spend,
+           revenue: r.revenue, orders: r.orders, newOrders: r.new_orders,
+           newRev: r.new_rev, returnOrders: r.return_orders, returnRev: r.return_rev, notes: r.notes };
+}
+function mapBudgetChange(r) {
+  return { id: r.id, clientId: r.client_id, date: r.date,
+           action: r.action, pct: r.pct,
+           prevBudget: r.prev_budget, newBudget: r.new_budget, notes: r.notes||'' };
+}
+
+function mapIao(r) {
+  return { id: r.id, clientId: r.client_id, offer: r.offer,
+           startDate: r.start_date, endDate: r.end_date };
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function signUp() {
+  const btn = document.getElementById('signup-btn');
+  const err = document.getElementById('signup-error');
+  const agency = document.getElementById('signup-agency').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  err.textContent = '';
+  if (!agency || !email || !password) { err.textContent = 'Fill in all fields.'; return; }
+  if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; return; }
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  const { data, error } = await sb.auth.signUp({
+    email, password, options: { data: { agency_name: agency } }
+  });
+  btn.disabled = false; btn.textContent = 'Create account';
+  if (error) { err.textContent = error.message; return; }
+  currentUser = data.user;
+  await loadAgency();
+  await loadAllData();
+  document.getElementById('user-email-chip').textContent = currentUser.email;
+  const chip = document.getElementById('agency-name-chip');
+  if (chip && currentAgencyName) chip.textContent = currentAgencyName;
+  showScreen('screen-agency');
+  updatePeriodLabel();
+  renderAll();
+}
+
+async function signIn() {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  err.textContent = '';
+  if (!email || !password) { err.textContent = 'Enter email and password.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) { err.textContent = 'Incorrect email or password.'; return; }
+  currentUser = data.user;
+  await loadAgency();
+  await loadAllData();
+  document.getElementById('user-email-chip').textContent = currentUser.email;
+  const chip = document.getElementById('agency-name-chip');
+  if (chip && currentAgencyName) chip.textContent = currentAgencyName;
+  showScreen('screen-agency');
+  updatePeriodLabel();
+  renderAll();
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  currentUser = null; currentAgencyId = null;
+  clients = []; dailyEntries = []; iaoLog = [];
+  showScreen('screen-login-agency');
+}
+
+async function clientLogin() {
+  const btn = document.getElementById('client-login-btn');
+  const err = document.getElementById('client-error');
+  const code = document.getElementById('client-code').value.trim();
+  err.textContent = '';
+  if (!code) { err.textContent = 'Enter your access code.'; return; }
+  btn.disabled = true; btn.textContent = 'Looking up...';
+  // search all clients for this password
+  const { data, error } = await sb.from('clients').select('*').eq('password', code).single();
+  btn.disabled = false; btn.textContent = 'Access dashboard';
+  if (error || !data) { err.textContent = 'Incorrect access code — check with your agency.'; return; }
+  // load this client's data
+  loggedInClientPortal = mapClient(data);
+  const [d, i] = await Promise.all([
+    sb.from('daily_entries').select('*').eq('client_id', data.id).order('date'),
+    sb.from('iao_log').select('*').eq('client_id', data.id).order('start_date'),
+  ]);
+  dailyEntries = (d.data || []).map(mapEntry);
+  iaoLog = (i.data || []).map(mapIao);
+  showScreen('screen-portal');
+  renderPortal();
+}
+
+function clientLogout() {
+  loggedInClientPortal = null; dailyEntries = []; iaoLog = [];
+  document.getElementById('client-code').value = '';
+  showScreen('screen-login-client');
+}
+
+function showClientLoginFromAgency() {
+  showScreen('screen-login-client');
+}
+
+// ── SAVE HELPERS ──────────────────────────────────────────────────────────
+function showSaving() {
+  document.getElementById('saving-indicator').style.display = 'flex';
+}
+function hideSaving() {
+  setTimeout(() => { document.getElementById('saving-indicator').style.display = 'none'; }, 800);
+}
+
+async function saveClient(c) {
+  if(currentAgencyId==='demo-agency') return;
+  showSaving();
+  await sb.from('clients').upsert({
+    id: c.id, agency_id: currentAgencyId, name: c.name, password: c.password,
+    status: c.status, aov: c.aov, margin: c.margin, cogs: c.cogs,
+    opex: c.opex, fees: c.fees, iao: c.iao, notes: c.notes,
+    commission_rate: c.commissionRate ?? 10
+  });
+  hideSaving();
+}
+
+async function saveDailyEntry(e) {
+  if(currentAgencyId==='demo-agency') return {id:'demo-'+Date.now(),...e};
+  showSaving();
+  const { data } = await sb.from('daily_entries').upsert({
+    id: e.id || undefined, client_id: e.clientId, date: e.date,
+    spend: e.spend, revenue: e.revenue, orders: e.orders,
+    new_orders: e.newOrders, new_rev: e.newRev,
+    return_orders: e.returnOrders, return_rev: e.returnRev, notes: e.notes
+  }).select().single();
+  hideSaving();
+  return data;
+}
+
+async function deleteDailyEntryDB(id) {
+  showSaving();
+  await sb.from('daily_entries').delete().eq('id', id);
+  hideSaving();
+}
+
+async function saveBudgetChange(bc) {
+  if(currentAgencyId==='demo-agency') return {id:'demo-'+Date.now(),...bc};
+  showSaving();
+  const { data } = await sb.from('budget_changes').insert({
+    client_id: bc.clientId, date: bc.date, action: bc.action,
+    pct: bc.pct, prev_budget: bc.prevBudget, new_budget: bc.newBudget, notes: bc.notes||''
+  }).select().single();
+  hideSaving();
+  return data;
+}
+
+async function deleteBudgetChange(id) {
+  showSaving();
+  await sb.from('budget_changes').delete().eq('id', id);
+  hideSaving();
+}
+
+async function saveIaoEntry(i) {
+  if(currentAgencyId==='demo-agency') return {id:'demo-'+Date.now(),...i};
+  showSaving();
+  const { data } = await sb.from('iao_log').upsert({
+    id: i.id || undefined, client_id: i.clientId, offer: i.offer,
+    start_date: i.startDate, end_date: i.endDate || null
+  }).select().single();
+  hideSaving();
+  return data;
+}
+
+async function deleteIaoDB(id) {
+  showSaving();
+  await sb.from('iao_log').delete().eq('id', id);
+  hideSaving();
+}
+
+// ── CALCULATIONS ──────────────────────────────────────────────────────────
+function aggregate(clientId) {
+  const entries = (typeof activePeriodStart !== "undefined" && activePeriodStart) ? dailyEntries.filter(e => e.clientId === clientId && e.date >= activePeriodStart && e.date <= activePeriodEnd) : dailyEntries.filter(e => e.clientId === clientId);
+  return {
+    revenue:      entries.reduce((a,e) => a + e.revenue, 0),
+    spend:        entries.reduce((a,e) => a + e.spend, 0),
+    orders:       entries.reduce((a,e) => a + e.orders, 0),
+    newOrders:    entries.reduce((a,e) => a + e.newOrders, 0),
+    newRev:       entries.reduce((a,e) => a + e.newRev, 0),
+    returnOrders: entries.reduce((a,e) => a + (e.returnOrders||0), 0),
+    returnRev:    entries.reduce((a,e) => a + (e.returnRev||0), 0),
+    days:         entries.length,
+  };
+}
+
+function calc(c) {
+  const ag = aggregate(c.id);
+  const { revenue, spend, orders, newOrders, newRev, returnOrders, returnRev, days } = ag;
+  const dailyBudget = days > 0 ? spend / days : 0;
+  const roas = spend > 0 ? revenue / spend : 0;
+  const beroas = c.margin > 0 ? 100 / c.margin : 0;
+  const totalCosts = spend + (c.opex||0) + (c.fees||0);
+  const amer = totalCosts > 0 ? revenue / totalCosts : 0;
+  const cpa = orders > 0 && spend > 0 ? spend / orders : 0;
+  const becpa = c.aov * (c.margin / 100);
+  const commission = revenue * ((c.commissionRate ?? 10) / 100);
+  const forecastRev = days > 0 ? (revenue / days) * 30 : 0;
+  // ── SMART SCALING ENGINE ─────────────────────────────────────────────────
+  let budgetPct = 0;
+  let scalingSignals = [];
+  let scalingWarnings = [];
+  let scalingScore = 0; // -100 to +100
+
+  // ── SIGNAL 1: ROAS vs BEROAS (most important) ──────────────────────────
+  const roasRatio = beroas > 0 ? roas / beroas : 0;
+  if      (roasRatio >= 1.5)  { scalingScore += 30; scalingSignals.push('ROAS strong'); }
+  else if (roasRatio >= 1.2)  { scalingScore += 20; scalingSignals.push('ROAS above BE'); }
+  else if (roasRatio >= 1.05) { scalingScore += 10; scalingSignals.push('ROAS near BE'); }
+  else if (roasRatio >= 0.95) { scalingScore -= 10; scalingWarnings.push('ROAS at BE edge'); }
+  else if (roasRatio >= 0.80) { scalingScore -= 25; scalingWarnings.push('ROAS below BE'); }
+  else                         { scalingScore -= 40; scalingWarnings.push('ROAS critical'); }
+
+  // ── SIGNAL 2: Net Profit trend ────────────────────────────────────────
+  const netProfit2 = revenue - (c.cogs||0) - spend - (c.opex||0) - (c.fees||0);
+  const netMargin2 = revenue > 0 ? (netProfit2 / revenue) * 100 : 0;
+  if      (netMargin2 >= 25) { scalingScore += 20; scalingSignals.push('Margins healthy'); }
+  else if (netMargin2 >= 10) { scalingScore += 10; scalingSignals.push('Margins ok'); }
+  else if (netMargin2 >= 0)  { scalingScore += 0;  scalingWarnings.push('Thin margins'); }
+  else if (netMargin2 >= -10){ scalingScore -= 15; scalingWarnings.push('Negative margin'); }
+  else                        { scalingScore -= 30; scalingWarnings.push('Bleeding cash'); }
+
+  // ── SIGNAL 2b: aMER (adjusted MER — revenue vs ALL costs) ───────────────
+  // aMER = Revenue / (Spend + OpEx + Fees) — more honest than ROAS alone
+  const amerScore = totalCosts > 0 ? revenue / totalCosts : 0;
+  const amerVsBeroas = beroas > 0 ? amerScore / beroas : 0;
+  if (totalCosts > spend) { // only score if there are non-ad costs worth tracking
+    if      (amerVsBeroas >= 1.3)  { scalingScore += 12; scalingSignals.push('aMER strong'); }
+    else if (amerVsBeroas >= 1.0)  { scalingScore += 6; }
+    else if (amerVsBeroas >= 0.85) { scalingScore -= 8;  scalingWarnings.push('aMER below BE'); }
+    else                            { scalingScore -= 18; scalingWarnings.push('aMER critical — all-in unprofitable'); }
+  }
+
+    // ── SIGNAL 3: CPA vs BECPA ────────────────────────────────────────────
+  const cpaRatio = (orders > 0 && spend > 0) ? (spend/orders) / (c.aov * (c.margin/100)) : null;
+  if (cpaRatio !== null) {
+    if      (cpaRatio <= 0.7)  { scalingScore += 15; scalingSignals.push('CPA efficient'); }
+    else if (cpaRatio <= 0.9)  { scalingScore += 8;  scalingSignals.push('CPA good'); }
+    else if (cpaRatio <= 1.0)  { scalingScore += 0; }
+    else if (cpaRatio <= 1.2)  { scalingScore -= 10; scalingWarnings.push('CPA high'); }
+    else                        { scalingScore -= 20; scalingWarnings.push('CPA too high'); }
+  }
+
+  // ── SIGNAL 4: New customer acquisition health ─────────────────────────
+  const nCPA2 = newOrders > 0 && spend > 0 ? spend / newOrders : 0;
+  const nCAC_ratio = (c.aov * (c.margin/100)) > 0 ? nCPA2 / (c.aov * (c.margin/100)) : null;
+  if (nCAC_ratio !== null && newOrders > 0) {
+    if      (nCAC_ratio <= 0.8)  { scalingScore += 10; scalingSignals.push('CAC efficient'); }
+    else if (nCAC_ratio <= 1.0)  { scalingScore += 5; }
+    else if (nCAC_ratio <= 1.3)  { scalingScore -= 8;  scalingWarnings.push('CAC elevated'); }
+    else                          { scalingScore -= 15; scalingWarnings.push('CAC unsustainable'); }
+  }
+
+  // ── SIGNAL 5: New customer ratio (% NCRed) ────────────────────────────
+  const ncred2 = revenue > 0 ? (newRev / revenue) * 100 : 0;
+  if (newOrders > 0) {
+    if      (ncred2 >= 60) { scalingScore += 10; scalingSignals.push('Strong new acq.'); }
+    else if (ncred2 >= 40) { scalingScore += 5; }
+    else if (ncred2 < 20)  { scalingScore -= 5;  scalingWarnings.push('Low new customers'); }
+  }
+
+  // ── SIGNAL 6: Data confidence (days logged) ───────────────────────────
+  const dataScore = days >= 14 ? 1.0 : days >= 7 ? 0.8 : days >= 3 ? 0.5 : 0.2;
+  scalingScore = Math.round(scalingScore * dataScore);
+  if (days < 7) scalingWarnings.push('Low data (<7 days)');
+
+  // ── SIGNAL 7: Spend momentum — spending too little to get signal ───────
+  const dailyBudget2 = days > 0 ? spend / days : 0;
+  if (dailyBudget2 < 20 && days > 3) {
+    scalingScore -= 5;
+    scalingWarnings.push('Spend too low for signal');
+  }
+
+  // ── SIGNAL 8: Creative Fatigue Detection ─────────────────────────────
+  let creativeFatigue = null;
+  let fatigueLevel = 0; // 0=none, 1=watch, 2=warning, 3=critical
+
+  const clientEntries = dailyEntries
+    .filter(e => e.clientId === c.id)
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  if (clientEntries.length >= 3) {
+    // Get last 7 days of ROAS values
+    const recentEntries = clientEntries.slice(-7);
+    const roasHistory = recentEntries
+      .filter(e => e.spend > 0)
+      .map(e => ({ date: e.date, roas: e.revenue / e.spend }));
+
+    if (roasHistory.length >= 3) {
+      // Check for consecutive ROAS decline
+      let consecutiveDeclines = 0;
+      let maxDeclines = 0;
+      for (let i = 1; i < roasHistory.length; i++) {
+        if (roasHistory[i].roas < roasHistory[i-1].roas) {
+          consecutiveDeclines++;
+          maxDeclines = Math.max(maxDeclines, consecutiveDeclines);
+        } else {
+          consecutiveDeclines = 0;
+        }
+      }
+
+      // Check overall trend — first half vs second half average
+      const half = Math.floor(roasHistory.length / 2);
+      const firstHalfAvg = roasHistory.slice(0, half).reduce((a,e) => a+e.roas, 0) / half;
+      const secondHalfAvg = roasHistory.slice(-half).reduce((a,e) => a+e.roas, 0) / half;
+      const trendDrop = firstHalfAvg > 0 ? ((firstHalfAvg - secondHalfAvg) / firstHalfAvg) * 100 : 0;
+
+      // Check CPA trend
+      const cpaHistory = recentEntries
+        .filter(e => e.spend > 0 && e.orders > 0)
+        .map(e => e.spend / e.orders);
+      let cpaTrending = false;
+      if (cpaHistory.length >= 3) {
+        const cpaFirst = cpaHistory.slice(0, Math.floor(cpaHistory.length/2)).reduce((a,b)=>a+b,0) / Math.floor(cpaHistory.length/2);
+        const cpaLast  = cpaHistory.slice(-Math.floor(cpaHistory.length/2)).reduce((a,b)=>a+b,0) / Math.floor(cpaHistory.length/2);
+        cpaTrending = cpaLast > cpaFirst * 1.15; // CPA up 15%+
+      }
+
+      // Was performing above BEROAS, now below? (peaked and falling)
+      const peakedAbove = roasHistory.slice(0, -2).some(e => e.roas >= beroas);
+      const nowBelow = roasHistory.slice(-2).every(e => e.roas < beroas);
+      const peakAndFall = peakedAbove && nowBelow;
+
+      // Determine fatigue level
+      if (maxDeclines >= 4 || (trendDrop >= 30 && peakAndFall)) {
+        fatigueLevel = 3;
+        creativeFatigue = '🔴 Creative likely fatigued — test new ads now';
+        scalingScore -= 15;
+        scalingWarnings.push('Creative fatigue detected');
+      } else if (maxDeclines >= 3 || (trendDrop >= 20 && cpaTrending)) {
+        fatigueLevel = 2;
+        creativeFatigue = '🟡 ROAS declining — upload new creatives soon';
+        scalingScore -= 8;
+        scalingWarnings.push('ROAS trending down');
+      } else if (maxDeclines >= 2 || trendDrop >= 10) {
+        fatigueLevel = 1;
+        creativeFatigue = '👀 Watch creative performance — early decline signs';
+      } else if (roasHistory.length >= 5 && trendDrop < -5) {
+        // ROAS actually improving
+        creativeFatigue = '✅ Creative still fresh — performance improving';
+        scalingScore += 5;
+        scalingSignals.push('Creative momentum');
+      }
+    }
+  } else if (clientEntries.length > 0 && clientEntries.length < 3) {
+    creativeFatigue = '📊 Log more days to track creative health';
+  }
+
+    // ── SIGNAL 9: Budget Change Cooldown ─────────────────────────────────
+  let cooldownActive = false;
+  let cooldownDaysLeft = 0;
+  let lastBudgetChange = null;
+  let cooldownMsg = null;
+  const COOLDOWN_DAYS = 4; // minimum days between budget changes
+
+  const clientBudgetChanges = budgetChanges
+    .filter(bc => bc.clientId === c.id)
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  if (clientBudgetChanges.length > 0) {
+    lastBudgetChange = clientBudgetChanges[0];
+    const lastDate = new Date(lastBudgetChange.date);
+    const today2 = new Date(_today ? _today() : new Date().toISOString().split('T')[0]);
+    const daysSince = Math.floor((today2 - lastDate) / (1000 * 60 * 60 * 24));
+    cooldownDaysLeft = Math.max(0, COOLDOWN_DAYS - daysSince);
+
+    if (cooldownDaysLeft > 0) {
+      cooldownActive = true;
+      cooldownMsg = `⏳ Cooldown: ${cooldownDaysLeft}d left (last change ${daysSince}d ago)`;
+      // Cap scaling score so it won't recommend another change during cooldown
+      if (scalingScore > 0) scalingScore = Math.min(scalingScore, 5);
+      scalingWarnings.push(`Budget cooldown (${cooldownDaysLeft}d)`);
+    } else if (daysSince <= 7) {
+      cooldownMsg = `✅ Cooldown cleared — ${daysSince}d since last change`;
+    }
+  }
+
+    // ── DECISION ENGINE ───────────────────────────────────────────────────
+  let budgetAction, scaleVerdict, scaleColor, scaleReason;
+
+  if (days < 3) {
+    budgetAction = 'need more data';
+    budgetPct = 0;
+    scaleVerdict = 'WAIT';
+    scaleColor = 'var(--text3)';
+    scaleReason = 'Log at least 3 days before making budget decisions.';
+  } else if (scalingScore >= 50) {
+    budgetPct = 30;
+    budgetAction = 'scale +30%';
+    scaleVerdict = 'SCALE HARD';
+    scaleColor = 'var(--green)';
+    scaleReason = scalingSignals.slice(0,2).join(' · ');
+  } else if (scalingScore >= 30) {
+    budgetPct = 20;
+    budgetAction = 'scale +20%';
+    scaleVerdict = 'SCALE';
+    scaleColor = 'var(--green)';
+    scaleReason = scalingSignals.slice(0,2).join(' · ');
+  } else if (scalingScore >= 15) {
+    budgetPct = 10;
+    budgetAction = 'bump +10%';
+    scaleVerdict = 'NUDGE UP';
+    scaleColor = '#86efac';
+    scaleReason = scalingSignals[0] || 'Slight positive signal';
+  } else if (scalingScore >= -10) {
+    budgetPct = 0;
+    budgetAction = 'hold';
+    scaleVerdict = 'HOLD';
+    scaleColor = 'var(--text2)';
+    scaleReason = scalingWarnings[0] || 'Wait for clearer signal';
+  } else if (scalingScore >= -25) {
+    budgetPct = -10;
+    budgetAction = 'cut -10%';
+    scaleVerdict = 'TRIM';
+    scaleColor = 'var(--amber)';
+    scaleReason = scalingWarnings.slice(0,2).join(' · ');
+  } else if (scalingScore >= -45) {
+    budgetPct = -20;
+    budgetAction = 'cut -20%';
+    scaleVerdict = 'CUT';
+    scaleColor = 'var(--red)';
+    scaleReason = scalingWarnings.slice(0,2).join(' · ');
+  } else {
+    budgetPct = -50;
+    budgetAction = 'pause — review';
+    scaleVerdict = 'PAUSE';
+    scaleColor = 'var(--red)';
+    scaleReason = scalingWarnings.slice(0,2).join(' · ');
+  }
+  const nAOV = newOrders > 0 ? newRev / newOrders : 0;
+  const rAOV = returnOrders > 0 ? returnRev / returnOrders : 0;
+  const nCPA = newOrders > 0 && spend > 0 ? spend / newOrders : 0;
+  const ncred = revenue > 0 ? (newRev / revenue) * 100 : 0;
+  const cac = newOrders > 0 && spend > 0 ? spend / newOrders : 0;
+  const becac = nAOV * (c.margin / 100);
+  const opexPerNew = newOrders > 0 && c.opex > 0 ? c.opex / newOrders : 0;
+  const calcVal = cac + opexPerNew;
+  const iaoProfitability = nAOV * (c.margin / 100) - nCPA;
+  const cogsGP = revenue > 0 ? ((revenue - (c.cogs||0)) / revenue) * 100 : 0;
+  const weightedGPM = revenue > 0 ? (newRev * c.margin + returnRev * (c.margin + 5)) / revenue : 0;
+  const grossProfit = revenue - (c.cogs||0);
+  const netProfit = revenue - (c.cogs||0) - spend - (c.opex||0) - (c.fees||0);
+  const netMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+  const clientNet = netProfit - commission;
+  return { revenue, spend, dailyBudget, orders, newOrders, newRev, returnOrders, returnRev, days,
+           roas, beroas, amer, cpa, becpa, commission, forecastRev, budgetAction, budgetPct,
+           nAOV, rAOV, nCPA, ncred, cac, becac, calcVal, iaoProfitability, cogsGP,
+           weightedGPM, grossProfit, netProfit, netMargin, clientNet, totalCosts,
+           scalingScore, scalingSignals, scalingWarnings, scaleVerdict, scaleColor, scaleReason,
+           creativeFatigue, fatigueLevel,
+           cooldownActive, cooldownDaysLeft, cooldownMsg, lastBudgetChange };
+}
+
+function calcDay(e, c) {
+  const roas = e.spend > 0 ? e.revenue / e.spend : 0;
+  const cpa = e.orders > 0 && e.spend > 0 ? e.spend / e.orders : 0;
+  const aov = e.orders > 0 ? e.revenue / e.orders : 0;
+  const nCpa = e.newOrders > 0 && e.spend > 0 ? e.spend / e.newOrders : 0;
+  const netDay = e.revenue - e.spend - (e.revenue * (1 - (c.margin / 100)));
+  const beroas = c.margin > 0 ? 100 / c.margin : 0;
+  return { roas, cpa, aov, nCpa, netDay, beroas };
+}
+
+// ── FORMATTERS ────────────────────────────────────────────────────────────
+const fd = (n, d=2) => isNaN(n)||n===null ? '—' : n.toFixed(d);
+const fK = n => Math.abs(n) >= 1000 ? '$'+(n/1000).toFixed(1)+'k' : '$'+Math.round(n);
+const fP = n => fd(n,1)+'%';
+const rC = (v,be) => { if(!be) return 'n'; const r=v/be; return r>=1.1?'g':r>=0.95?'w':'r'; };
+const cC = (v,be) => { if(!be) return 'n'; return v<=be*0.9?'g':v<=be?'w':'r'; };
+const pC = v => v>0?'g':v>-100?'w':'r';
+const bCls = p => p>=20?'bump-up':p>0?'bump-up':p<0?'bump-down':'hold';
+const rowBg = s => ({active:'rgba(74,222,128,0.03)',paused:'rgba(251,191,36,0.03)',scaling:'rgba(167,139,250,0.04)',testing:'rgba(96,165,250,0.03)',dead:'rgba(248,113,113,0.03)'}[s]||'');
+
+// ── SHARED HELPERS ────────────────────────────────────────────────────────
+function makeInput(val, onDone, type='text', width=60) {
+  const inp = document.createElement('input');
+  inp.className = 'cell-edit'; inp.type = type; inp.value = val; inp.style.minWidth = width+'px';
+  inp.onblur = () => { onDone(type==='number' ? parseFloat(inp.value)||0 : inp.value); renderAll(); };
+  inp.onkeydown = e => { if(e.key==='Enter') inp.blur(); };
+  setTimeout(() => inp.focus(), 10); return inp;
+}
+
+function editable(td, display, val, setter, type='text', width=60) {
+  const span = document.createElement('span'); span.textContent = display; span.style.cursor = 'pointer';
+  span.onclick = () => { td.innerHTML=''; td.appendChild(makeInput(val, async v => { setter(v); }, type, width)); };
+  td.appendChild(span);
+}
+
+function statusCell(c) {
+  const td = document.createElement('td');
+  const wrap = document.createElement('div'); wrap.className = 'badge '+c.status;
+  const sel = document.createElement('select'); sel.className = 'status-select';
+  STATUSES.forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; if(s===c.status)o.selected=true; sel.appendChild(o); });
+  sel.onchange = async () => { c.status=sel.value; await saveClient(c); renderAll(); };
+  wrap.appendChild(sel); td.appendChild(wrap); return td;
+}
+
+function delBtn(c) {
+  const td = document.createElement('td');
+  const b = document.createElement('button'); b.className='icon-btn'; b.innerHTML='&times;';
+  b.onclick = async () => {
+    if(!confirm('Remove '+c.name+'? This deletes all their data.')) return;
+    showSaving();
+    await sb.from('clients').delete().eq('id', c.id);
+    hideSaving();
+    clients = clients.filter(x => x.id !== c.id);
+    dailyEntries = dailyEntries.filter(e => e.clientId !== c.id);
+    iaoLog = iaoLog.filter(i => i.clientId !== c.id);
+    renderAll();
+  };
+  td.appendChild(b); return td;
+}
+
+function getFiltered() {
+  const s = (document.getElementById('search')||{}).value||'';
+  const sf = (document.getElementById('status-filter')||{}).value||'';
+  return clients.filter(c => c.name.toLowerCase().includes(s.toLowerCase()) && (!sf||c.status===sf));
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────
+function renderOverview(data) {
+  const tb = document.getElementById('overview-body'); tb.innerHTML = '';
+  data.forEach(c => {
+    const m = calc(c); const tr = document.createElement('tr'); tr.style.background = rowBg(c.status);
+    const cells = [];
+    const tn = document.createElement('td'); tn.style.cssText = 'font-weight:600;font-size:13px;';
+    editable(tn, c.name, c.name, async v => { c.name=v; await saveClient(c); }, 'text', 80); cells.push(tn);
+    cells.push(statusCell(c));
+    const ti = document.createElement('td'); const isp = document.createElement('span'); isp.className='iao-tag'; isp.textContent=c.iao||'None';
+    isp.onclick = () => { ti.innerHTML=''; ti.appendChild(makeInput(c.iao||'', async v => { c.iao=v; await saveClient(c); }, 'text', 120)); }; ti.appendChild(isp); cells.push(ti);
+    const add = (html, sep) => { const td=document.createElement('td'); if(sep)td.className='sep'; td.innerHTML=html; cells.push(td); };
+    add(`<span class="${rC(m.roas,m.beroas)}">${fd(m.roas)}x</span>`, true);
+    add(`<span class="n">${fd(m.beroas)}x</span>`);
+    add(`<span class="${rC(m.roas,m.beroas)}">${fd(m.roas)}x</span>`);
+    add(`<span class="${rC(m.amer,m.beroas)}">${fd(m.amer)}x</span>`);
+    add(`<span class="${cC(m.cpa,m.becpa)}">$${fd(m.cpa)}</span>`, true);
+    add(`<span class="n">$${fd(m.becpa)}</span>`);
+    add(`<span class="n">$${fd(m.dailyBudget,0)}/d</span>`, true);
+    add(`<span class="n">${fK(m.spend)}</span>`);
+    add(`<span style="font-weight:600">${fK(m.revenue)}</span>`);
+    const taov = document.createElement('td'); editable(taov, '$'+c.aov, c.aov, async v => { c.aov=v; await saveClient(c); }, 'number', 50); cells.push(taov);
+    const tgm  = document.createElement('td'); editable(tgm, c.margin+'%', c.margin, async v => { c.margin=v; await saveClient(c); }, 'number', 40); cells.push(tgm);
+    // commission cell — editable rate
+    const tcomm=document.createElement('td');tcomm.className='sep';
+    tcomm.style.whiteSpace='nowrap';
+    const commSpan=document.createElement('span');
+    commSpan.className=m.commission>500?'g':'n';
+    commSpan.textContent=fK(m.commission);
+    const commRateBtn=document.createElement('span');
+    commRateBtn.style.cssText='margin-left:5px;font-size:10px;color:var(--text3);cursor:pointer;padding:1px 6px;border-radius:4px;border:0.5px solid var(--border2);transition:all 0.15s;';
+    commRateBtn.textContent=(c.commissionRate??10)+'%';
+    commRateBtn.title='Click to edit commission %';
+    commRateBtn.onmouseenter=()=>commRateBtn.style.borderColor='var(--accent)';
+    commRateBtn.onmouseleave=()=>commRateBtn.style.borderColor='var(--border2)';
+    commRateBtn.onclick=()=>{
+      const np=prompt('Commission rate for '+c.name+' (%):',c.commissionRate??10);
+      if(np!==null&&np.trim()!==''){const v=parseFloat(np);if(!isNaN(v)&&v>=0&&v<=100){c.commissionRate=v;saveClient(c);renderAll();}}
+    };
+    tcomm.appendChild(commSpan);tcomm.appendChild(commRateBtn);cells.push(tcomm);
+    add(`<span style="font-weight:600">${fK(m.forecastRev)}</span>`);
+    const tact=document.createElement('td');
+    const actWrap=document.createElement('div');actWrap.style.cssText='display:flex;flex-direction:column;gap:3px;min-width:120px;';
+    const actBadge=document.createElement('span');
+    actBadge.className=bCls(m.budgetPct);
+    actBadge.style.cssText='font-size:10px;font-weight:700;letter-spacing:0.3px;';
+    actBadge.textContent=m.scaleVerdict||m.budgetAction;
+    const actReason=document.createElement('span');
+    actReason.style.cssText='font-size:9px;color:var(--text3);white-space:normal;max-width:160px;line-height:1.3;';
+    actReason.textContent=m.scaleReason||'';
+    actWrap.appendChild(actBadge);
+    if(m.scaleReason)actWrap.appendChild(actReason);
+    if(m.creativeFatigue && m.fatigueLevel >= 2){
+      const fatDiv=document.createElement('span');
+      fatDiv.style.cssText='font-size:9px;color:'+(m.fatigueLevel===3?'var(--red)':'var(--amber)')+';white-space:normal;max-width:160px;line-height:1.3;margin-top:2px;';
+      fatDiv.textContent=m.fatigueLevel===3?'⚠ Refresh creatives':'⚠ Creative declining';
+      actWrap.appendChild(fatDiv);
+    }
+    tact.appendChild(actWrap);cells.push(tact);
+    const tnotes = document.createElement('td'); tnotes.style.cssText='max-width:160px;overflow:hidden;text-overflow:ellipsis;color:var(--text2);';
+    editable(tnotes, c.notes||'—', c.notes||'', async v => { c.notes=v; await saveClient(c); }, 'text', 130); cells.push(tnotes);
+    cells.push(delBtn(c));
+    cells.forEach(cell => tr.appendChild(cell)); tb.appendChild(tr);
+  });
+}
+
+// ── ACQUISITION ───────────────────────────────────────────────────────────
+function renderAcquisition(data) {
+  const tb = document.getElementById('acq-body'); tb.innerHTML = '';
+  data.forEach(c => {
+    const m = calc(c); const tr = document.createElement('tr'); tr.style.background = rowBg(c.status);
+    const cells = [];
+    const tn = document.createElement('td'); tn.style.fontWeight='600'; tn.textContent=c.name; cells.push(tn);
+    cells.push(statusCell(c));
+    const add = (html, sep) => { const td=document.createElement('td'); if(sep)td.className='sep'; td.innerHTML=html; cells.push(td); };
+    add(`<span style="font-weight:600">${m.newOrders}</span>`, true);
+    add(`<span style="font-weight:600">${fK(m.newRev)}</span>`);
+    add(`<span class="n">$${fd(m.nAOV)}</span>`);
+    add(`<span class="${cC(m.nCPA,m.becpa)}">$${fd(m.nCPA)}</span>`);
+    add(`<span class="n">$${fd(m.becpa)}</span>`);
+    const ipcls = m.iaoProfitability>0?'g':m.iaoProfitability>-10?'w':'r';
+    add(`<span class="${ipcls}">${m.iaoProfitability>=0?'+':''}$${fd(m.iaoProfitability)}</span>`);
+    add(`<span style="font-weight:600">${m.returnOrders}</span>`, true);
+    add(`<span style="font-weight:600">${fK(m.returnRev)}</span>`);
+    add(`<span class="n">$${fd(m.rAOV)}</span>`);
+    const ncc = m.ncred>60?'g':m.ncred>40?'w':'r';
+    add(`<span class="${ncc}">${fP(m.ncred)}</span>`, true);
+    add(`<span class="${cC(m.cac,m.becac)}">$${fd(m.cac)}</span>`);
+    add(`<span class="n">$${fd(m.becac)}</span>`);
+    add(`<span class="n">$${fd(m.calcVal)}</span>`);
+    cells.forEach(cell => tr.appendChild(cell)); tb.appendChild(tr);
+  });
+}
+
+// ── PROFITABILITY ─────────────────────────────────────────────────────────
+function renderProfitability(data) {
+  const tb = document.getElementById('profit-body'); tb.innerHTML = '';
+  data.forEach(c => {
+    const m = calc(c); const tr = document.createElement('tr'); tr.style.background = rowBg(c.status);
+    const cells = [];
+    const tn = document.createElement('td'); tn.style.fontWeight='600'; tn.textContent=c.name; cells.push(tn);
+    cells.push(statusCell(c));
+    const add = (html, sep) => { const td=document.createElement('td'); if(sep)td.className='sep'; td.innerHTML=html; cells.push(td); };
+    const edt = (display, val, setter, type, width, sep) => { const td=document.createElement('td'); if(sep)td.className='sep'; editable(td,display,val,v=>setter(v),type,width); cells.push(td); };
+    edt(fK(c.cogs||0), c.cogs||0, async v => { c.cogs=v; await saveClient(c); }, 'number', 65, true);
+    const cgpcls = m.cogsGP>50?'g':m.cogsGP>30?'w':'r';
+    add(`<span class="${cgpcls}">${fP(m.cogsGP)}</span>`);
+    edt(c.margin+'%', c.margin, async v => { c.margin=v; await saveClient(c); }, 'number', 40);
+    const wgcls = m.weightedGPM>50?'g':m.weightedGPM>30?'w':'r';
+    add(`<span class="${wgcls}">${fP(m.weightedGPM)}</span>`);
+    edt(fK(c.opex||0), c.opex||0, async v => { c.opex=v; await saveClient(c); }, 'number', 65, true);
+    edt(fK(c.fees||0), c.fees||0, async v => { c.fees=v; await saveClient(c); }, 'number', 65);
+    add(`<span class="n">${fK(m.totalCosts)}</span>`);
+    add(`<span class="${pC(m.grossProfit)}">${fK(m.grossProfit)}</span>`, true);
+    add(`<span class="${pC(m.netProfit)}">${fK(m.netProfit)}</span>`);
+    const nmcls = m.netMargin>20?'g':m.netMargin>5?'w':'r';
+    add(`<span class="${nmcls}">${fP(m.netMargin)}</span>`);
+    add(`<span class="n">${fK(m.commission)}</span>`);
+    add(`<span class="${pC(m.clientNet)}">${fK(m.clientNet)}</span>`);
+    cells.forEach(cell => tr.appendChild(cell)); tb.appendChild(tr);
+  });
+}
+
+// ── DAILY TRACKER ─────────────────────────────────────────────────────────
+let activeDailyClientId = null;
+let pickerState = {};
+
+function renderDailyTracker() {
+  const tabBar = document.getElementById('daily-client-tabs');
+  const panelWrap = document.getElementById('daily-client-panels');
+  tabBar.innerHTML = ''; panelWrap.innerHTML = '';
+  if (!activeDailyClientId && clients.length > 0) activeDailyClientId = clients[0].id;
+  clients.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'client-tab'+(c.id===activeDailyClientId?' active':'');
+    btn.textContent = c.name;
+    btn.onclick = () => { activeDailyClientId=c.id; renderDailyTracker(); };
+    tabBar.appendChild(btn);
+    const panel = document.createElement('div');
+    panel.className = 'client-daily-panel'+(c.id===activeDailyClientId?' active':'');
+    panel.innerHTML = buildDailyPanel(c);
+    panelWrap.appendChild(panel);
+  });
+}
+
+function buildDailyPanel(c) {
+  const entries = dailyEntries.filter(e => e.clientId===c.id).sort((a,b) => b.date.localeCompare(a.date));
+  const m = calc(c); const beroas = m.beroas;
+  const avgRoas = m.spend>0 ? m.revenue/m.spend : 0;
+  const avgCpa = m.orders>0&&m.spend>0 ? m.spend/m.orders : 0;
+  const profitDays = entries.filter(e => calcDay(e,c).roas >= beroas).length;
+  const roasColor = avgRoas>=beroas?'var(--green)':avgRoas>=beroas*0.9?'var(--amber)':'var(--red)';
+  initPicker(c.id);
+  const selectedDate = pickerState[c.id].selected;
+
+  const statsHtml = `<div class="daily-stats">
+    <div class="ds-card"><div class="ds-label">Days logged</div><div class="ds-val">${entries.length}</div></div>
+    <div class="ds-card"><div class="ds-label">Total spend</div><div class="ds-val">${fK(m.spend)}</div></div>
+    <div class="ds-card"><div class="ds-label">Total revenue</div><div class="ds-val" style="color:var(--green)">${fK(m.revenue)}</div></div>
+    <div class="ds-card"><div class="ds-label">Avg ROAS</div><div class="ds-val" style="color:${roasColor}">${fd(avgRoas)}x</div></div>
+    <div class="ds-card"><div class="ds-label">Avg CPA</div><div class="ds-val">${avgCpa>0?'$'+fd(avgCpa):'—'}</div></div>
+    <div class="ds-card"><div class="ds-label">Profitable days</div><div class="ds-val" style="color:var(--green)">${profitDays}<span style="color:var(--text3);font-size:13px;font-weight:400">/${entries.length}</span></div></div>
+  </div>`;
+
+  const formHtml = `<div class="add-day-bar">
+    <div class="field-group"><div class="field-label">Date</div>
+      <div class="date-picker-wrap">
+        <div class="date-display" id="dp-disp-${c.id}" onclick="togglePicker('${c.id}')">
+          <span>${selectedDate}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="date-picker-dropdown" id="dp-drop-${c.id}"></div>
+      </div>
+    </div>
+    <div class="field-group"><div class="field-label">Ad Spend</div><input class="field-input" type="number" id="di-spend-${c.id}" placeholder="80" min="0"></div>
+    <div class="field-group"><div class="field-label">Revenue</div><input class="field-input" type="number" id="di-rev-${c.id}" placeholder="320" min="0"></div>
+    <div class="field-group"><div class="field-label">Orders</div><input class="field-input" type="number" id="di-orders-${c.id}" placeholder="4" min="0"></div>
+    <div class="field-group"><div class="field-label">New Orders</div><input class="field-input" type="number" id="di-neworders-${c.id}" placeholder="3" min="0"></div>
+    <div class="field-group"><div class="field-label">New Rev</div><input class="field-input" type="number" id="di-newrev-${c.id}" placeholder="240" min="0"></div>
+    <div class="field-group"><div class="field-label">Return Orders</div><input class="field-input" type="number" id="di-retorders-${c.id}" placeholder="1" min="0"></div>
+    <div class="field-group"><div class="field-label">Return Rev</div><input class="field-input" type="number" id="di-retrev-${c.id}" placeholder="95" min="0"></div>
+    <div class="field-group"><div class="field-label">Notes</div><input class="field-input notes-input" type="text" id="di-notes-${c.id}" placeholder="optional"></div>
+    <div class="field-group"><div class="field-label">&nbsp;</div><button class="btn primary" onclick="addDayEntry('${c.id}')">+ Add Day</button></div>
+  </div>`;
+
+  let rowsHtml = '';
+  entries.forEach(e => {
+    const dm = calcDay(e,c);
+    const isProfit=dm.roas>=dm.beroas, isLoss=dm.roas<dm.beroas*0.85;
+    const rowCls=isProfit?'day-profit':isLoss?'day-loss':'day-break';
+    const roasCls=dm.roas>=dm.beroas?'g':dm.roas>=dm.beroas*0.9?'w':'r';
+    const netCls=dm.netDay>0?'g':dm.netDay>-20?'w':'r';
+    rowsHtml+=`<tr class="${rowCls}">
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${e.date}</td>
+      <td>$${fd(e.spend,0)}</td><td style="font-weight:600">${fK(e.revenue)}</td>
+      <td style="color:var(--text2)">${e.orders}</td>
+      <td><span class="${roasCls}">${fd(dm.roas)}x</span></td>
+      <td><span class="n">${fd(dm.beroas)}x</span></td>
+      <td>$${fd(dm.cpa)}</td><td>$${fd(dm.aov)}</td>
+      <td style="color:var(--text2)">${e.newOrders}</td>
+      <td style="color:var(--text2)">${e.returnOrders||0}</td>
+      <td>$${fd(dm.nCpa)}</td>
+      <td><span class="${netCls}">${dm.netDay>=0?'+':''}${fK(dm.netDay)}</span></td>
+      <td style="color:var(--text3);font-size:11px">${e.notes||''}</td>
+      <td><button class="icon-btn" onclick="deleteDayEntry('${e.id}','${c.id}')">&times;</button></td>
+    </tr>`;
+  });
+
+  // Budget change log section
+  const bcEntries = budgetChanges.filter(bc=>bc.clientId===c.id).sort((a,b)=>b.date.localeCompare(a.date));
+  const cooldownBanner = m.cooldownActive ? `
+    <div style="margin:12px 20px 0;padding:10px 14px;background:rgba(251,191,36,0.08);border:0.5px solid rgba(251,191,36,0.2);border-radius:var(--radius-lg);display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px">⏳</span>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--amber)">${m.cooldownMsg}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">Last: ${m.lastBudgetChange.action} on ${m.lastBudgetChange.date} · Wait before making another change</div>
+      </div>
+    </div>` : m.cooldownMsg ? `
+    <div style="margin:12px 20px 0;padding:10px 14px;background:rgba(74,222,128,0.06);border:0.5px solid rgba(74,222,128,0.15);border-radius:var(--radius-lg);display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px">✅</span>
+      <div style="font-size:12px;font-weight:500;color:var(--green)">${m.cooldownMsg}</div>
+    </div>` : '';
+
+  let bcRows = '';
+  bcEntries.slice(0,5).forEach(bc=>{
+    const pctCls = bc.pct>0?'g':'r';
+    bcRows+=`<tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${bc.date}</td>
+      <td><span class="${pctCls}" style="font-weight:600">${bc.action}</span></td>
+      <td style="color:var(--text2)">$${bc.prevBudget||'—'}/d → $${bc.newBudget||'—'}/d</td>
+      <td style="color:var(--text3);font-size:11px">${bc.notes||''}</td>
+      <td><button class="icon-btn" onclick="deleteBudgetChangeEntry('${bc.id}','${c.id}')">&times;</button></td>
+    </tr>`;
+  });
+
+  const bcSection = `
+    <div style="padding:14px 20px;border-bottom:0.5px solid var(--border);background:var(--bg2);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">Budget Change Log</span>
+        <button class="btn sm" onclick="openBudgetChangeModal('${c.id}')">+ Log Change</button>
+      </div>
+      ${bcEntries.length===0
+        ? '<div style="font-size:12px;color:var(--text3);padding:4px 0">No budget changes logged yet.</div>'
+        : `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+            <thead><tr>
+              <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text3);padding:6px 8px;border-bottom:0.5px solid var(--border2);text-transform:uppercase">Date</th>
+              <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text3);padding:6px 8px;border-bottom:0.5px solid var(--border2);text-transform:uppercase">Action</th>
+              <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text3);padding:6px 8px;border-bottom:0.5px solid var(--border2);text-transform:uppercase">Budget</th>
+              <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text3);padding:6px 8px;border-bottom:0.5px solid var(--border2);text-transform:uppercase">Notes</th>
+              <th></th>
+            </tr></thead>
+            <tbody>${bcRows}</tbody>
+          </table></div>`
+      }
+    </div>${cooldownBanner}`;
+
+    const tableHtml = entries.length===0
+    ? `<div class="empty-state"><div style="font-size:28px;margin-bottom:8px">📅</div>No days logged yet. Add your first day above.</div>`
+    : `<div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th>
+          <th class="sep">ROAS</th><th>BEROAS</th><th>CPA</th><th>AOV</th>
+          <th class="sep">New Ord.</th><th>Ret. Ord.</th><th>nCPA</th>
+          <th class="sep">Net Day</th><th>Notes</th><th></th>
+        </tr></thead><tbody>${rowsHtml}</tbody>
+      </table></div>
+      <div class="tip">Green = profitable day · Red = unprofitable · Amber = near breakeven</div>`;
+
+  // Generate tips for this client
+  const tips = generateTips(c, m);
+  const tipsHtml = tips.length === 0 ? '' : `
+    <div class="tips-wrap">
+      <div class="tips-header">💬 Recommendations</div>
+      ${tips.map(t => `<div class="tip-row ${t.level}"><span class="tip-icon">${t.icon}</span><span class="tip-text">${t.text}</span></div>`).join('')}
+    </div>`;
+
+  return `<div class="daily-client-header">
+    <div>
+      <div class="daily-client-name">${c.name}</div>
+      <div class="daily-meta">
+        <span class="badge ${c.status}">${c.status}</span>
+        <span class="daily-meta-sep">·</span>
+        <span>BEROAS <strong style="color:var(--text)">${fd(beroas)}x</strong></span>
+        <span class="daily-meta-sep">·</span>
+        <span>Scaling: <strong style="color:${m.scaleColor||'var(--text2)'}">${m.scaleVerdict||'—'}</strong></span>
+        ${m.scaleReason?`<span style="font-size:10px;color:var(--text3)">(${m.scaleReason})</span>`:''}
+        <span class="daily-meta-sep">·</span>
+        <span>Avg daily spend <strong style="color:var(--text)">${m.days>0?'$'+fd(m.spend/m.days,0):'—'}</strong></span>
+      </div>
+    </div>
+  </div>
+  ${m.creativeFatigue ? `<div style="padding:10px 20px;border-bottom:0.5px solid var(--border);background:${m.fatigueLevel===3?'rgba(248,113,113,0.06)':m.fatigueLevel===2?'rgba(251,191,36,0.06)':'rgba(200,240,96,0.04)'};display:flex;align-items:center;gap:8px;">
+    <span style="font-size:12px;font-weight:500;color:${m.fatigueLevel===3?'var(--red)':m.fatigueLevel===2?'var(--amber)':m.fatigueLevel===1?'var(--text2)':'var(--green)'}">${m.creativeFatigue}</span>
+  </div>` : ''}
+  ${statsHtml}${formHtml}${tableHtml}`;
+}
+
+// ── DATE PICKER ───────────────────────────────────────────────────────────
+function initPicker(id) {
+  if (!pickerState[id]) {
+    const n = new Date();
+    pickerState[id] = { year:n.getFullYear(), month:n.getMonth(), selected:n.toISOString().split('T')[0] };
+  }
+}
+function buildPickerGrid(id, prefix='dp') {
+  const s = pickerState[id]||pickerState[id+'_iao']||pickerState[id];
+  const ps = prefix==='dp' ? pickerState[id] : (pickerState[id+'_iao']||pickerState[id]);
+  const today = new Date().toISOString().split('T')[0];
+  const firstDay = new Date(ps.year, ps.month, 1).getDay();
+  const daysInMonth = new Date(ps.year, ps.month+1, 0).getDate();
+  const pad = n => String(n).padStart(2,'0');
+  let grid = '';
+  DAYS.forEach(d => { grid+=`<div class="dp-day-name">${d}</div>`; });
+  for(let i=0;i<firstDay;i++) grid+=`<div class="dp-day empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${ps.year}-${pad(ps.month+1)}-${pad(d)}`;
+    const cls=`dp-day${dateStr===ps.selected?' selected':''}${dateStr===today?' today':''}`;
+    grid+=`<div class="${cls}" onclick="selectDate('${id}','${dateStr}','${prefix}')">${d}</div>`;
+  }
+  return `<div class="dp-header">
+    <button class="dp-nav" onclick="shiftMonth('${id}',-1,'${prefix}')">&#8249;</button>
+    <div class="dp-month-label">${MONTHS[ps.month]} ${ps.year}</div>
+    <button class="dp-nav" onclick="shiftMonth('${id}',1,'${prefix}')">&#8250;</button>
+  </div><div class="dp-grid">${grid}</div>`;
+}
+function getPickerState(id, prefix) {
+  const key = prefix==='dp' ? id : id+'_iao';
+  if (!pickerState[key]) { const n=new Date(); pickerState[key]={year:n.getFullYear(),month:n.getMonth(),selected:n.toISOString().split('T')[0]}; }
+  return pickerState[key];
+}
+function togglePicker(id, prefix='dp') {
+  let dropId, dispId;
+  if(prefix==='range'){ dropId=`dp-${id}-drop`; dispId=`dp-${id}-disp`; }
+  else if(prefix==='dp'){ dropId=`dp-drop-${id}`; dispId=`dp-disp-${id}`; }
+  else { dropId=`dp-iao-drop-${id}`; dispId=`dp-iao-disp-${id}`; }
+  const drop = document.getElementById(dropId);
+  const disp = document.getElementById(dispId);
+  if(!drop) return;
+  const isOpen = drop.classList.contains('open');
+  document.querySelectorAll('.date-picker-dropdown').forEach(d=>d.classList.remove('open'));
+  document.querySelectorAll('.date-display').forEach(d=>d.classList.remove('open'));
+  if(!isOpen){ drop.classList.add('open'); if(disp)disp.classList.add('open'); drop.innerHTML=buildPickerGrid(id,prefix); }
+}
+function shiftMonth(id, dir, prefix='dp') {
+  const ps = getPickerState(id, prefix);
+  ps.month+=dir; if(ps.month>11){ps.month=0;ps.year++;} if(ps.month<0){ps.month=11;ps.year--;}
+  let dropId;
+  if(prefix==='range') dropId=`dp-${id}-drop`;
+  else if(prefix==='dp') dropId=`dp-drop-${id}`;
+  else dropId=`dp-iao-drop-${id}`;
+  const drop = document.getElementById(dropId); if(drop) drop.innerHTML=buildPickerGrid(id,prefix);
+}
+function selectDate(id, dateStr, prefix='dp') {
+  const ps = getPickerState(id, prefix); ps.selected = dateStr;
+  let dispId, dropId;
+  if(prefix==='range'){
+    dispId = `dp-${id}-disp`;
+    dropId = `dp-${id}-drop`;
+  } else if(prefix==='dp'){
+    dispId = `dp-disp-${id}`;
+    dropId = `dp-drop-${id}`;
+  } else {
+    dispId = `dp-iao-disp-${id}`;
+    dropId = `dp-iao-drop-${id}`;
+  }
+  const disp = document.getElementById(dispId);
+  if(disp){ const span=disp.querySelector('span'); if(span) span.textContent=dateStr; }
+  const drop = document.getElementById(dropId); if(drop) drop.innerHTML=buildPickerGrid(id,prefix);
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('.date-picker-wrap')){
+    document.querySelectorAll('.date-picker-dropdown').forEach(d=>d.classList.remove('open'));
+    document.querySelectorAll('.date-display').forEach(d=>d.classList.remove('open'));
+  }
+});
+
+// ── DAILY ENTRY CRUD ──────────────────────────────────────────────────────
+async function addDayEntry(clientId) {
+  const g = id => document.getElementById(id);
+  const ps = getPickerState(clientId, 'dp');
+  const date = ps.selected;
+  const spend = parseFloat(g(`di-spend-${clientId}`).value)||0;
+  const revenue = parseFloat(g(`di-rev-${clientId}`).value)||0;
+  const orders = parseInt(g(`di-orders-${clientId}`).value)||0;
+  const newOrders = parseInt(g(`di-neworders-${clientId}`).value)||0;
+  const newRev = parseFloat(g(`di-newrev-${clientId}`).value)||0;
+  const returnOrders = parseInt(g(`di-retorders-${clientId}`).value)||0;
+  const returnRev = parseFloat(g(`di-retrev-${clientId}`).value)||0;
+  const notes = g(`di-notes-${clientId}`).value||'';
+  if(!date||spend===0&&revenue===0){ alert('Enter at least spend and revenue.'); return; }
+  const entry = { clientId, date, spend, revenue, orders, newOrders, newRev, returnOrders, returnRev, notes };
+  const saved = await saveDailyEntry(entry);
+  if(saved) { entry.id = saved.id; dailyEntries.push(entry); }
+  ['spend','rev','orders','neworders','newrev','retorders','retrev','notes'].forEach(f => { const el=g(`di-${f}-${clientId}`); if(el) el.value=''; });
+  renderAll();
+}
+
+async function deleteDayEntry(id, clientId) {
+  if(!confirm('Delete this entry?')) return;
+  await deleteDailyEntryDB(id);
+  dailyEntries = dailyEntries.filter(e => e.id !== id);
+  renderAll();
+}
+
+// ── ACQUISITION OFFER TRACKER ────────────────────────────────────────────
+let activeIaoClientId = null;
+
+function getIaoStats(clientId) {
+  return iaoLog.filter(i => i.clientId===clientId).map(i => {
+    const start=i.startDate, end=i.endDate||new Date().toISOString().split('T')[0];
+    const entries=dailyEntries.filter(e=>e.clientId===clientId&&e.date>=start&&e.date<=end);
+    const revenue=entries.reduce((a,e)=>a+e.revenue,0);
+    const spend=entries.reduce((a,e)=>a+e.spend,0);
+    const newOrders=entries.reduce((a,e)=>a+e.newOrders,0);
+    const newRev=entries.reduce((a,e)=>a+e.newRev,0);
+    const c=clients.find(x=>x.id===clientId);
+    const gm=c?c.margin/100:0.45; const aov=c?c.aov:80;
+    const roas=spend>0?revenue/spend:0;
+    const beroas=gm>0?1/gm:2.22;
+    const nCPA=newOrders>0&&spend>0?spend/newOrders:0;
+    const nAOV=newOrders>0?newRev/newOrders:0;
+    const iaoProfitability=nAOV*gm-nCPA;
+    return {...i,revenue,spend,newOrders,newRev,roas,beroas,nCPA,nAOV,iaoProfitability,days:entries.length,isActive:i.endDate===null};
+  });
+}
+
+function renderIaoTracker() {
+  const tabBar=document.getElementById('iao-client-tabs-bar');
+  const panelWrap=document.getElementById('iao-client-panels');
+  if(!tabBar||!panelWrap) return;
+  tabBar.innerHTML=''; panelWrap.innerHTML='';
+  if(!activeIaoClientId&&clients.length>0) activeIaoClientId=clients[0].id;
+  clients.forEach(c => {
+    const btn=document.createElement('button');
+    btn.className='client-tab'+(c.id===activeIaoClientId?' active':'');
+    btn.textContent=c.name;
+    btn.onclick=()=>{activeIaoClientId=c.id;renderIaoTracker();};
+    tabBar.appendChild(btn);
+    const panel=document.createElement('div');
+    panel.className='client-daily-panel'+(c.id===activeIaoClientId?' active':'');
+    panel.innerHTML=buildIaoPanel(c);
+    panelWrap.appendChild(panel);
+  });
+}
+
+function buildIaoPanel(c) {
+  const stats=getIaoStats(c.id);
+  const activeIao=iaoLog.find(i=>i.clientId===c.id&&i.endDate===null);
+  const withData=stats.filter(s=>s.days>=1);
+  const bestByProfit=withData.length>0?withData.reduce((a,b)=>a.iaoProfitability>b.iaoProfitability?a:b):null;
+  const ps=getPickerState(c.id,'iao');
+
+  const formHtml=`<div class="iao-add-bar">
+    <div class="field-group"><div class="field-label">Offer name</div><input class="field-input" style="width:180px" type="text" id="iao-offer-${c.id}" placeholder="e.g. Free shipping $75+, 10% off first order"></div>
+    <div class="field-group"><div class="field-label">Start date</div>
+      <div class="date-picker-wrap">
+        <div class="date-display" id="dp-iao-disp-${c.id}" onclick="togglePicker('${c.id}','iao')">
+          <span>${ps.selected}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="date-picker-dropdown" id="dp-iao-drop-${c.id}"></div>
+      </div>
+    </div>
+    <div class="field-group"><div class="field-label">&nbsp;</div><button class="btn primary" onclick="addIaoEntry('${c.id}')">+ Log Offer</button></div>
+    ${activeIao?`<div class="field-group"><div class="field-label">&nbsp;</div><button class="btn danger sm" onclick="endIao('${activeIao.id}','${c.id}')">End current offer</button></div>`:''}
+  </div>`;
+
+  let cardsHtml='';
+  if(stats.length===0){
+    cardsHtml=`<div class="empty-state">No offers logged yet. Log your first offer above.</div>`;
+  } else {
+    cardsHtml=`<div class="iao-compare-grid">`;
+    stats.slice().reverse().forEach(s=>{
+      const isBest=bestByProfit&&s.id===bestByProfit.id&&s.days>0;
+      const rC2=s.roas>=s.beroas?'var(--green)':s.roas>=s.beroas*0.9?'var(--amber)':'var(--red)';
+      const iC=s.iaoProfitability>0?'var(--green)':s.iaoProfitability>-5?'var(--amber)':'var(--red)';
+      cardsHtml+=`<div class="iao-card${isBest?' best':''}">
+        <div class="iao-card-header">
+          <div>
+            <div class="iao-card-name">${s.offer}</div>
+            <div class="iao-card-dates">${s.startDate} → ${s.endDate||'active'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            ${s.isActive?'<span class="iao-active-badge">Active</span>':''}
+            ${isBest?'<span class="best-tag">Best Offer</span>':''}
+            <span class="iao-days-badge">${s.days} day${s.days!==1?'s':''}</span>
+          </div>
+        </div>
+        <div class="iao-card-body">
+          <div class="iao-stat"><div class="iao-stat-label">ROAS</div><div class="iao-stat-val" style="color:${rC2}">${s.days>0?fd(s.roas)+'x':'—'}</div></div>
+          <div class="iao-stat"><div class="iao-stat-label">Offer Profit</div><div class="iao-stat-val" style="color:${iC}">${s.days>0?(s.iaoProfitability>=0?'+':'')+'$'+fd(s.iaoProfitability):'—'}</div></div>
+          <div class="iao-stat"><div class="iao-stat-label">nCPA</div><div class="iao-stat-val">${s.days>0&&s.nCPA>0?'$'+fd(s.nCPA):'—'}</div></div>
+          <div class="iao-stat"><div class="iao-stat-label">nAOV</div><div class="iao-stat-val">${s.days>0&&s.nAOV>0?'$'+fd(s.nAOV):'—'}</div></div>
+          <div class="iao-stat"><div class="iao-stat-label">New Orders</div><div class="iao-stat-val">${s.newOrders}</div></div>
+          <div class="iao-stat"><div class="iao-stat-label">Revenue</div><div class="iao-stat-val">${s.days>0?fK(s.revenue):'—'}</div></div>
+        </div>
+        <div style="padding:0 14px 10px;display:flex;gap:6px;">
+          ${!s.isActive?`<button class="copy-btn" onclick="reactivateIao('${s.id}','${c.id}')">Reactivate</button>`:''}
+          <button class="copy-btn" style="color:var(--red);border-color:var(--red-border)" onclick="deleteIaoEntry('${s.id}')">Delete</button>
+        </div>
+      </div>`;
+    });
+    cardsHtml+=`</div>`;
+  }
+
+  let tableRows='';
+  iaoLog.filter(i=>i.clientId===c.id).slice().reverse().forEach(i=>{
+    const s=stats.find(x=>x.id===i.id)||{};
+    tableRows+=`<tr>
+      <td style="font-weight:600">${i.offer}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${i.startDate}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${i.endDate||'—'}</td>
+      <td>${i.endDate===null?'<span class="iao-active-badge">Active</span>':'<span style="color:var(--text3);font-size:11px">Ended</span>'}</td>
+      <td>${s.days||0} days</td>
+      <td>${s.days>0?'<span class="'+(s.roas>=s.beroas?'g':'r')+'">'+fd(s.roas)+'x</span>':'—'}</td>
+      <td>${s.days>0&&s.iaoProfitability!==undefined?'<span class="'+(s.iaoProfitability>0?'g':'r')+'">'+(s.iaoProfitability>=0?'+':'')+'$'+fd(s.iaoProfitability)+'</span>':'—'}</td>
+      <td>${s.days>0&&s.nCPA?'$'+fd(s.nCPA):'—'}</td>
+    </tr>`;
+  });
+
+  const tableHtml=iaoLog.filter(i=>i.clientId===c.id).length===0?'':`
+    <div class="iao-section">
+      <h3>Full Offer History</h3>
+      <div style="overflow-x:auto;background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);">
+        <table class="iao-log-table">
+          <thead><tr><th>Offer</th><th>Start</th><th>End</th><th>Status</th><th>Days</th><th>ROAS</th><th>Offer Profit</th><th>nCPA</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // Generate tips for this client
+  const tips = generateTips(c, m);
+  const tipsHtml = tips.length === 0 ? '' : `
+    <div class="tips-wrap">
+      <div class="tips-header">💬 Recommendations</div>
+      ${tips.map(t => `<div class="tip-row ${t.level}"><span class="tip-icon">${t.icon}</span><span class="tip-text">${t.text}</span></div>`).join('')}
+    </div>`;
+
+  return `<div class="daily-client-header">
+    <div>
+      <div class="daily-client-name">${c.name} — Offer Tracker</div>
+      <div class="daily-meta">
+        ${activeIao?`<span class="iao-active-badge">Active: ${activeIao.offer}</span>`:'<span style="color:var(--text3);font-size:11px">No active offer</span>'}
+        ${bestByProfit&&bestByProfit.days>0?`<span class="daily-meta-sep">·</span><span style="font-size:11px;color:var(--text2)">Best: <strong style="color:var(--accent)">${bestByProfit.offer}</strong></span>`:''}
+      </div>
+    </div>
+  </div>${formHtml}
+  <div class="iao-section"><h3>Offer Comparison</h3>${cardsHtml}</div>
+  ${tableHtml}`;
+}
+
+async function addIaoEntry(clientId) {
+  const offerEl = document.getElementById(`iao-offer-${clientId}`);
+  const offer = (offerEl&&offerEl.value.trim())||'';
+  if(!offer){ alert('Enter an offer name.'); return; }
+  const ps = getPickerState(clientId,'iao');
+  const startDate = ps.selected;
+  // end any active offer
+  for(const i of iaoLog.filter(x=>x.clientId===clientId&&x.endDate===null)){
+    i.endDate=startDate; await saveIaoEntry(i);
+  }
+  const newEntry = { clientId, offer, startDate, endDate:null };
+  const saved = await saveIaoEntry(newEntry);
+  if(saved){ newEntry.id=saved.id; iaoLog.push(newEntry); }
+  const c=clients.find(x=>x.id===clientId); if(c){ c.iao=offer; await saveClient(c); }
+  if(offerEl) offerEl.value='';
+  renderAll();
+}
+
+async function endIao(iaoId, clientId) {
+  const today=new Date().toISOString().split('T')[0];
+  const i=iaoLog.find(x=>x.id===iaoId);
+  if(i){ i.endDate=today; await saveIaoEntry(i); }
+  renderAll();
+}
+
+async function reactivateIao(iaoId, clientId) {
+  const today=new Date().toISOString().split('T')[0];
+  for(const i of iaoLog.filter(x=>x.clientId===clientId&&x.endDate===null)){
+    i.endDate=today; await saveIaoEntry(i);
+  }
+  const i=iaoLog.find(x=>x.id===iaoId);
+  if(i){ i.endDate=null; i.startDate=today; await saveIaoEntry(i); }
+  const c=clients.find(x=>x.id===clientId); if(c&&i){ c.iao=i.offer; await saveClient(c); }
+  renderAll();
+}
+
+async function deleteIaoEntry(id) {
+  if(!confirm('Delete this offer?')) return;
+  await deleteIaoDB(id);
+  iaoLog=iaoLog.filter(i=>i.id!==id);
+  renderAll();
+}
+
+// ── PASSWORDS ─────────────────────────────────────────────────────────────
+function renderPasswords() {
+  const tb=document.getElementById('pw-table');
+  tb.innerHTML=`<tr><th>Client</th><th>Status</th><th>Access Code</th><th></th><th>Change</th></tr>`;
+  clients.forEach(c=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:600">${c.name}</td><td><span class="badge ${c.status}">${c.status}</span></td><td><span class="pw-code">${c.password}</span></td><td><button class="copy-btn" onclick="copyCode('${c.password}','${c.name}')">Copy code</button></td><td><button class="copy-btn" onclick="changeCode('${c.id}')">Change</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function copyCode(pw,name){ navigator.clipboard.writeText(pw).then(()=>alert('Copied! Send to '+name+': '+pw)).catch(()=>alert(name+' code: '+pw)); }
+async function changeCode(id){
+  const c=clients.find(x=>x.id===id); if(!c) return;
+  const np=prompt('New access code for '+c.name+':',c.password);
+  if(np&&np.trim()){ c.password=np.trim(); await saveClient(c); renderPasswords(); }
+}
+
+// ── SUMMARY BAR ───────────────────────────────────────────────────────────
+function renderSummary(data) {
+  const totSpend=data.reduce((a,c)=>a+calc(c).spend,0);
+  const totRev=data.reduce((a,c)=>a+calc(c).revenue,0);
+  const totComm=data.reduce((a,c)=>a+calc(c).commission,0);
+  const avgRoas=totSpend>0?totRev/totSpend:0;
+  const totFore=data.reduce((a,c)=>a+calc(c).forecastRev,0);
+  const totNet=data.reduce((a,c)=>a+calc(c).netProfit,0);
+  const active=data.filter(c=>['active','scaling'].includes(c.status)).length;
+  const rc=avgRoas>=2?'var(--green)':avgRoas>=1.5?'var(--amber)':'var(--red)';
+  document.getElementById('summary-bar').innerHTML=`
+    <div class="s-card"><div class="s-label">Active</div><div class="s-val">${active}<span style="color:var(--text3);font-size:14px;font-weight:400">/${data.length}</span></div><div class="s-sub">accounts running</div></div>
+    <div class="s-card"><div class="s-label">Mo. Spend</div><div class="s-val">${fK(totSpend)}</div><div class="s-sub">all accounts</div></div>
+    <div class="s-card"><div class="s-label">Revenue</div><div class="s-val" style="color:var(--green)">${fK(totRev)}</div><div class="s-sub">from daily entries</div></div>
+    <div class="s-card"><div class="s-label">Blended ROAS</div><div class="s-val" style="color:${rc}">${avgRoas.toFixed(2)}x</div><div class="s-sub">portfolio avg</div></div>
+    <div class="s-card"><div class="s-label">Commission</div><div class="s-val" style="color:var(--accent)">${fK(totComm)}</div><div class="s-sub">rev share / mo</div></div>
+    <div class="s-card"><div class="s-label">Portfolio Net</div><div class="s-val" style="color:${totNet>0?'var(--green)':'var(--red)'}">${fK(totNet)}</div><div class="s-sub">after all costs</div></div>
+    <div class="s-card"><div class="s-label">30d Forecast</div><div class="s-val">${fK(totFore)}</div><div class="s-sub">projected revenue</div></div>
+  `;
+}
+
+// ── CLIENT PORTAL ─────────────────────────────────────────────────────────
+function switchPortalTab(name,el){
+  document.querySelectorAll('.portal-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.portal-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('portal-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+function renderPortal() {
+  const c=loggedInClientPortal; if(!c) return;
+  const m=calc(c);
+  document.getElementById('portal-client-name').textContent=c.name;
+  const rc=rC(m.roas,m.beroas);
+  const roasColor=rc==='g'?'var(--green)':rc==='w'?'var(--amber)':'var(--red)';
+  document.getElementById('portal-summary').innerHTML=`
+    <div class="s-card"><div class="s-label">Revenue</div><div class="s-val" style="color:var(--green)">${fK(m.revenue)}</div><div class="s-sub">Forecast: ${fK(m.forecastRev)}</div></div>
+    <div class="s-card"><div class="s-label">ROAS</div><div class="s-val" style="color:${roasColor}">${fd(m.roas)}x</div><div class="s-sub">Breakeven: ${fd(m.beroas)}x</div></div>
+    <div class="s-card"><div class="s-label">Ad Spend</div><div class="s-val">${fK(m.spend)}</div><div class="s-sub">$${fd(m.dailyBudget,0)}/day avg</div></div>
+    <div class="s-card"><div class="s-label">Status</div><div class="s-val"><span class="badge ${c.status}">${c.status}</span></div><div class="s-sub">${m.budgetAction}</div></div>
+  `;
+  const mc=(label,val,sub,color)=>`<div class="metric-card"><div class="mc-label">${label}</div><div class="mc-val"${color?` style="color:${color}"`:''}>${val}</div>${sub?`<div class="mc-sub">${sub}</div>`:''}</div>`;
+  const rcol=rc==='g'?'var(--green)':rc==='w'?'var(--amber)':'var(--red)';
+  const ccol=cC(m.cpa,m.becpa)==='g'?'var(--green)':cC(m.cpa,m.becpa)==='w'?'var(--amber)':'var(--red)';
+  document.getElementById('portal-adperf').innerHTML=
+    mc('ROAS',fd(m.roas)+'x','Breakeven: '+fd(m.beroas)+'x',rcol)+
+    mc('aMER',fd(m.amer)+'x','Adj. efficiency',rcol)+
+    mc('CPA','$'+fd(m.cpa),'Breakeven: $'+fd(m.becpa),ccol)+
+    mc('AOV','$'+c.aov,'Avg order value')+
+    mc('Acquisition Offer',c.iao||'None','Current offer')+
+    mc('Recommendation',m.budgetAction,'');
+  const npcol=cC(m.nCPA,m.becpa)==='g'?'var(--green)':cC(m.nCPA,m.becpa)==='w'?'var(--amber)':'var(--red)';
+  const ipcol=m.iaoProfitability>0?'var(--green)':m.iaoProfitability>-10?'var(--amber)':'var(--red)';
+  document.getElementById('portal-customers').innerHTML=
+    mc('New Orders',m.newOrders,'')+
+    mc('New Revenue',fK(m.newRev),'% of total: '+fP(m.ncred))+
+    mc('nAOV','$'+fd(m.nAOV),'New customer avg order')+
+    mc('nCPA','$'+fd(m.nCPA),'Cost per new customer',npcol)+
+    mc('Offer Profit',(m.iaoProfitability>=0?'+':'')+'$'+fd(m.iaoProfitability),'Per new customer',ipcol)+
+    mc('Return Orders',m.returnOrders,'rAOV: $'+fd(m.rAOV));
+  const np2col=m.netProfit>0?'var(--green)':m.netProfit>-500?'var(--amber)':'var(--red)';
+  const nmcol=m.netMargin>20?'var(--green)':m.netMargin>5?'var(--amber)':'var(--red)';
+  document.getElementById('portal-profit-cards').innerHTML=
+    mc('Gross Profit',fK(m.grossProfit),'Revenue − COGS')+
+    mc('Net Profit',fK(m.netProfit),'After all costs',np2col)+
+    mc('Net Margin',fP(m.netMargin),'',nmcol)+
+    mc('GPM %',fP(c.margin),'Gross profit margin')+
+    mc('Weighted GPM',fP(m.weightedGPM),'Blended new + returning')+
+    mc('COGS','$'+fd(c.cogs||0,0),'Cost of goods');
+  // Tips on portal
+  const portalTips = generateTips(c, m);
+  const portalTipsEl = document.getElementById('portal-tips');
+  if(portalTipsEl){
+    if(portalTips.length === 0){
+      portalTipsEl.style.display = 'none';
+    } else {
+      portalTipsEl.style.display = 'block';
+      portalTipsEl.innerHTML = `
+        <h3 style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">💬 Recommendations</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${portalTips.map(t => `<div class="tip-row ${t.level}"><span class="tip-icon">${t.icon}</span><span class="tip-text">${t.text}</span></div>`).join('')}
+        </div>`;
+    }
+  }
+  document.getElementById('portal-notes').innerHTML=`<strong>Notes from your agency:</strong>&nbsp; ${c.notes||'No notes yet.'}`; 
+  const entries=dailyEntries.filter(e=>e.clientId===c.id).sort((a,b)=>b.date.localeCompare(a.date));
+  let dailyRows='';
+  entries.forEach(e=>{
+    const dm=calcDay(e,c);
+    const roasCls=dm.roas>=dm.beroas?'g':dm.roas>=dm.beroas*0.9?'w':'r';
+    const netCls=dm.netDay>0?'g':dm.netDay>-20?'w':'r';
+    const rowStyle=dm.roas>=dm.beroas?'background:rgba(74,222,128,0.04)':dm.roas<dm.beroas*0.85?'background:rgba(248,113,113,0.04)':'background:rgba(251,191,36,0.04)';
+    dailyRows+=`<tr style="${rowStyle}">
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${e.date}</td>
+      <td>$${fd(e.spend,0)}</td><td style="font-weight:600">${fK(e.revenue)}</td>
+      <td style="color:var(--text2)">${e.orders}</td>
+      <td><span class="${roasCls}">${fd(dm.roas)}x</span></td>
+      <td>$${fd(dm.cpa)}</td><td>$${fd(dm.aov)}</td>
+      <td><span class="${netCls}">${dm.netDay>=0?'+':''}${fK(dm.netDay)}</span></td>
+      <td style="color:var(--text3);font-size:11px">${e.notes||''}</td>
+    </tr>`;
+  });
+  document.getElementById('portal-daily-table').innerHTML=entries.length===0
+    ?`<tr><td colspan="9" style="padding:24px;color:var(--text3);text-align:center">No daily data yet.</td></tr>`
+    :`<thead><tr><th>Date</th><th>Spend</th><th>Revenue</th><th>Orders</th><th>ROAS</th><th>CPA</th><th>AOV</th><th>Net Day</th><th>Notes</th></tr></thead><tbody>${dailyRows}</tbody>`;
+  const rows=[
+    ['ROAS',fd(m.roas)+'x'],['BEROAS',fd(m.beroas)+'x'],['MER',fd(m.roas)+'x'],['aMER',fd(m.amer)+'x'],
+    ['CPA','$'+fd(m.cpa)],['BECPA','$'+fd(m.becpa)],['CAC','$'+fd(m.cac)],['BECAC','$'+fd(m.becac)],['CALC','$'+fd(m.calcVal)],
+    ['nAOV','$'+fd(m.nAOV)],['rAOV','$'+fd(m.rAOV)],['% NCRed',fP(m.ncred)],
+    ['Offer Profitability',(m.iaoProfitability>=0?'+':'')+'$'+fd(m.iaoProfitability)],
+    ['GPM %',fP(c.margin)],['COGS GP%',fP(m.cogsGP)],['Weighted GPM',fP(m.weightedGPM)],
+    ['Gross Profit',fK(m.grossProfit)],['Net Profit',fK(m.netProfit)],['Net Margin',fP(m.netMargin)],
+    ['Ad Spend (period)',fK(m.spend)],['Avg Daily Spend','$'+fd(m.days>0?m.spend/m.days:0,0)+'/d'],
+    ['30d Forecast',fK(m.forecastRev)],['Budget Action',m.budgetAction],['Acquisition Offer',c.iao||'None'],
+  ];
+  document.getElementById('portal-all').innerHTML=`<div class="detail-rows">${rows.map(([l,v])=>`<div class="detail-row"><span class="dr-label">${l}</span><span class="dr-val">${v}</span></div>`).join('')}</div>`;
+}
+
+
+// ── DATE RANGE & PERIOD SYSTEM ────────────────────────────────────────────
+let currentPeriod = 'L7';
+let compareMode = false;
+let activePeriodStart = null;
+let activePeriodEnd = null;
+let drPS = null; // pending start
+let drPE = null; // pending end
+let drPickEnd = false;
+let drLY = new Date().getFullYear();
+let drLM = new Date().getMonth();
+let drPendingPreset = null;
+
+const PRESETS = [
+  {k:'TODAY',l:'Today'},
+  {k:'YESTERDAY',l:'Yesterday'},
+  {k:'L7',l:'Last 7 days'},
+  {k:'L30',l:'Last 30 days'},
+  {k:'THIS_WEEK',l:'This week'},
+  {k:'LAST_WEEK',l:'Last week'},
+  {k:'MTD',l:'This month'},
+  {k:'LAST_MONTH',l:'Last month'},
+  {k:'QTD',l:'Quarter to date'},
+  {k:'YTD',l:'Year to date'},
+  {k:'ALL',l:'Maximum'},
+  {k:'CUSTOM',l:'Custom'},
+];
+
+const _p = n=>String(n).padStart(2,'0');
+const _f = d=>`${d.getFullYear()}-${_p(d.getMonth()+1)}-${_p(d.getDate())}`;
+function _today(){ return new Date().toISOString().split('T')[0]; }
+
+function getPeriodDates(p){
+  const t=new Date(),ts=_today();
+  if(p==='TODAY') return{s:ts,e:ts,l:'Today'};
+  if(p==='YESTERDAY'){const y=new Date(t);y.setDate(t.getDate()-1);return{s:_f(y),e:_f(y),l:'Yesterday'};}
+  if(p==='L7'){const s=new Date(t);s.setDate(t.getDate()-6);return{s:_f(s),e:ts,l:'Last 7 days'};}
+  if(p==='L30'){const s=new Date(t);s.setDate(t.getDate()-29);return{s:_f(s),e:ts,l:'Last 30 days'};}
+  if(p==='THIS_WEEK'){const s=new Date(t);s.setDate(t.getDate()-t.getDay());return{s:_f(s),e:ts,l:'This week'};}
+  if(p==='LAST_WEEK'){const s=new Date(t);s.setDate(t.getDate()-t.getDay()-7);const e=new Date(t);e.setDate(t.getDate()-t.getDay()-1);return{s:_f(s),e:_f(e),l:'Last week'};}
+  if(p==='MTD'){const s=new Date(t.getFullYear(),t.getMonth(),1);return{s:_f(s),e:ts,l:'This month'};}
+  if(p==='QTD'){const qm=Math.floor(t.getMonth()/3)*3;const s=new Date(t.getFullYear(),qm,1);return{s:_f(s),e:ts,l:'Quarter to date'};}
+  if(p==='YTD'){const s=new Date(t.getFullYear(),0,1);return{s:_f(s),e:ts,l:'Year to date'};}
+  if(p==='LAST_MONTH'){const s=new Date(t.getFullYear(),t.getMonth()-1,1);const e=new Date(t.getFullYear(),t.getMonth(),0);return{s:_f(s),e:_f(e),l:'Last month'};}
+  if(p&&p.startsWith('MONTH:')){const[,yr,mo]=p.split(':');const s=new Date(+yr,+mo,1);const e=new Date(+yr,+mo+1,0);return{s:_f(s),e:_f(e),l:`${MONTHS[+mo]} ${yr}`};}
+  if(p&&p.startsWith('CUSTOM:')){const[,s,e]=p.split(':');return{s,e,l:'Custom'};}
+  return{s:'2022-01-01',e:_today(),l:'Maximum'};
+}
+
+function getPrev(p){
+  const t=new Date();
+  if(p==='L7'){const e=new Date(t);e.setDate(t.getDate()-7);const s=new Date(t);s.setDate(t.getDate()-13);return{s:_f(s),e:_f(e)};}
+  if(p==='L30'){const e=new Date(t);e.setDate(t.getDate()-30);const s=new Date(t);s.setDate(t.getDate()-59);return{s:_f(s),e:_f(e)};}
+  if(p==='MTD'){const s=new Date(t.getFullYear(),t.getMonth()-1,1);const e=new Date(t.getFullYear(),t.getMonth(),0);return{s:_f(s),e:_f(e)};}
+  return null;
+}
+
+function updatePeriodLabel(){
+  const{s,e,l}=getPeriodDates(currentPeriod);
+  activePeriodStart=s; activePeriodEnd=e;
+  const lb=document.getElementById('dr-lbl');
+  const rg=document.getElementById('dr-range');
+  if(lb)lb.textContent=l;
+  if(rg)rg.textContent=s===e?s:`${s} – ${e}`;
+}
+
+function setPeriod(p){currentPeriod=p;updatePeriodLabel();renderAll();}
+
+function setMonthPeriod(yr,mo,el){
+  currentPeriod=`MONTH:${yr}:${mo}`;
+  document.querySelectorAll('.month-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');updatePeriodLabel();renderAll();
+}
+
+function buildMonthTabs(){
+  const bar=document.getElementById('month-tabs-bar');if(!bar)return;
+  const months={};
+  dailyEntries.forEach(e=>{const[yr,mo]=e.date.split('-');const k=`${yr}-${mo}`;if(!months[k])months[k]={yr:+yr,mo:+mo-1,key:k};});
+  const sorted=Object.values(months).sort((a,b)=>a.key>b.key?-1:1);
+  if(sorted.length<=1){bar.style.display='none';return;}
+  bar.style.display='flex';bar.innerHTML='';
+  sorted.forEach(({yr,mo})=>{
+    const btn=document.createElement('button');btn.className='month-tab';
+    btn.textContent=`${MONTHS[mo]} ${yr}`;
+    btn.onclick=()=>setMonthPeriod(yr,mo,btn);bar.appendChild(btn);
+  });
+}
+
+// ── DROPDOWN ──────────────────────────────────────────────────────────────
+function drToggle(evt){
+  evt.stopPropagation();
+  const dd=document.getElementById('dr-dd');
+  const btn=document.getElementById('dr-btn');
+  if(!dd)return;
+  if(dd.classList.contains('show')){drClose();return;}
+  const{s,e}=getPeriodDates(currentPeriod);
+  drPS=s;drPE=e;drPickEnd=false;
+  drPendingPreset=currentPeriod;
+  const d=new Date(s);drLY=d.getFullYear();drLM=d.getMonth();
+  dd.classList.add('show');btn.classList.add('open');
+  drBuild();
+}
+
+function drClose(){
+  const dd=document.getElementById('dr-dd');
+  const btn=document.getElementById('dr-btn');
+  if(dd)dd.classList.remove('show');
+  if(btn)btn.classList.remove('open');
+  drPendingPreset=null;
+}
+
+function drApply(){
+  if(!drPS||!drPE){drClose();return;}
+  const s=drPS<=drPE?drPS:drPE;
+  const e=drPS<=drPE?drPE:drPS;
+  // if user clicked a preset, use that key directly
+  if(drPendingPreset&&drPendingPreset!=='CUSTOM'){
+    currentPeriod=drPendingPreset;
+  } else {
+    const m=PRESETS.find(p=>{
+      if(p.k==='CUSTOM'||p.k==='ALL')return false;
+      const{s:ps,e:pe}=getPeriodDates(p.k);return ps===s&&pe===e;
+    });
+    currentPeriod=m?m.k:`CUSTOM:${s}:${e}`;
+  }
+  drPendingPreset=null;
+  drClose();updatePeriodLabel();renderAll();
+}
+
+document.addEventListener('click',e=>{
+  const anchor=document.getElementById('dr-anchor');
+  if(anchor&&!anchor.contains(e.target))drClose();
+});
+
+function drBuild(){
+  drBuildPresets();drBuildCals();
+  const fs=document.getElementById('dr-fin-s');
+  const fe=document.getElementById('dr-fin-e');
+  if(fs)fs.value=drPS||'';if(fe)fe.value=drPE||'';
+  const chk=document.getElementById('dr-chk');
+  if(chk)chk.classList.toggle('on',compareMode);
+}
+
+function drBuildPresets(){
+  const wrap=document.getElementById('dr-presets');if(!wrap)return;
+  wrap.innerHTML='';
+  PRESETS.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='dr-preset-item';
+    const pending=drPendingPreset||currentPeriod;
+    const isActive=pending===p.k||(p.k==='CUSTOM'&&pending.startsWith('CUSTOM:'));
+    if(isActive)div.classList.add('sel');
+    div.innerHTML=`<div class="dr-dot"></div><span>${p.l}</span>`;
+    div.onclick=(evt)=>{
+      evt.stopPropagation();
+      if(p.k==='CUSTOM'){ drPendingPreset='CUSTOM'; drBuildPresets(); return; }
+      if(p.k==='ALL'){ drPS='2022-01-01'; drPE=_today(); } else {
+        const{s,e}=getPeriodDates(p.k);drPS=s;drPE=e;
+      }
+      drPendingPreset=p.k;
+      drPickEnd=false;
+      // Today/Yesterday — just update the range, keep panel open
+      if(p.k==='TODAY'||p.k==='YESTERDAY'){
+        const d2=new Date(drPS);drLY=d2.getFullYear();drLM=d2.getMonth();
+        drBuildCals();drBuildPresets();
+        const fs2=document.getElementById('dr-fin-s');
+        const fe2=document.getElementById('dr-fin-e');
+        if(fs2)fs2.value=drPS;if(fe2)fe2.value=drPE;
+        return;
+      }
+      // all others update calendars and wait for Update
+      const d=new Date(drPS);drLY=d.getFullYear();drLM=d.getMonth();
+      drBuildCals();drBuildPresets();
+      const fs=document.getElementById('dr-fin-s');
+      const fe=document.getElementById('dr-fin-e');
+      if(fs)fs.value=drPS;if(fe)fe.value=drPE;
+    };
+    wrap.appendChild(div);
+  });
+}
+
+function drBuildCals(){
+  const le=document.getElementById('dr-cal-l');
+  const re=document.getElementById('dr-cal-r');
+  if(!le||!re)return;
+  let rm=drLM+1,ry=drLY;
+  if(rm>11){rm=0;ry++;}
+  le.innerHTML=drOneCal(drLY,drLM,true);
+  re.innerHTML=drOneCal(ry,rm,false);
+}
+
+function drOneCal(year,month,isLeft){
+  const fd=new Date(year,month,1).getDay();
+  const dim=new Date(year,month+1,0).getDate();
+  const ts=_today();const s=drPS,e=drPE;
+  let g='';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{g+=`<div class="dr-dn">${d}</div>`;});
+  for(let i=0;i<fd;i++)g+=`<div class="dr-d dr-d-empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${year}-${_p(month+1)}-${_p(d)}`;
+    const isFuture=ds>ts;
+    let cls='dr-d';
+    if(isFuture)cls+=' dr-d-other';
+    if(ds===ts)cls+=' dr-d-today';
+    if(!isFuture){
+      if(s&&e&&ds===s&&ds===e)cls+=' dr-d-start dr-d-end';
+      else if(s&&ds===s)cls+=' dr-d-start';
+      else if(e&&ds===e)cls+=' dr-d-end';
+      else if(s&&e&&ds>s&&ds<e)cls+=' dr-d-in';
+    }
+    const clickHandler=isFuture?'':`onclick="drDay(event,'${ds}')"`;
+    g+=`<div class="${cls}" ${clickHandler}>${d}</div>`;
+  }
+  const ln=isLeft?`<button class="dr-cal-nav" onclick="drShift(event,-1)">&#8249;</button>`:`<button class="dr-cal-nav ghost">&#8249;</button>`;
+  const rn=!isLeft?`<button class="dr-cal-nav" onclick="drShift(event,1)">&#8250;</button>`:`<button class="dr-cal-nav ghost">&#8250;</button>`;
+  return`<div class="dr-cal-head">${ln}<span class="dr-cal-title">${MONTHS[month]} ${year}</span>${rn}</div><div class="dr-grid">${g}</div>`;
+}
+
+function drShift(evt,dir){
+  evt.stopPropagation();
+  drLM+=dir;
+  if(drLM>11){drLM=0;drLY++;}
+  if(drLM<0){drLM=11;drLY--;}
+  drBuildCals();
+}
+
+function drDay(evt,ds){
+  evt.stopPropagation();
+  // clicking calendar days always means custom — auto-switch
+  drPendingPreset='CUSTOM';
+  // if no start yet, or if range is already complete — start fresh
+  if(!drPS || (drPS && drPE)){
+    drPS=ds; drPE=null; drPickEnd=true;
+  } else {
+    // second click — set end
+    if(ds<drPS){ drPE=drPS; drPS=ds; }
+    else drPE=ds;
+    drPickEnd=false;
+  }
+  const fs=document.getElementById('dr-fin-s');
+  const fe=document.getElementById('dr-fin-e');
+  if(fs)fs.value=drPS||'';if(fe)fe.value=drPE||'';
+  drBuildCals();drBuildPresets();
+}
+
+function drToggleCompare(){
+  compareMode=!compareMode;
+  const chk=document.getElementById('dr-chk');
+  if(chk)chk.classList.toggle('on',compareMode);
+}
+
+function renderCompareBanner(data){
+  const banner=document.getElementById('compare-banner');if(!banner)return;
+  if(!compareMode||!getPrev(currentPeriod)){banner.classList.remove('visible');return;}
+  const cr=data.reduce((a,c)=>{const ag=aggregatePeriod(c.id);return a+ag.revenue;},0);
+  const cs=data.reduce((a,c)=>{const ag=aggregatePeriod(c.id);return a+ag.spend;},0);
+  const prev=getPrev(currentPeriod);
+  const pr=data.reduce((a,c)=>{const ents=dailyEntries.filter(e=>e.clientId===c.id&&e.date>=prev.s&&e.date<=prev.e);return a+ents.reduce((b,e)=>b+e.revenue,0);},0);
+  const ps=data.reduce((a,c)=>{const ents=dailyEntries.filter(e=>e.clientId===c.id&&e.date>=prev.s&&e.date<=prev.e);return a+ents.reduce((b,e)=>b+e.spend,0);},0);
+  const rd=pr>0?((cr-pr)/pr)*100:0;
+  const sd=ps>0?((cs-ps)/ps)*100:0;
+  const cRoas=cs>0?cr/cs:0;const pRoas=ps>0?pr/ps:0;
+  const rrd=pRoas>0?((cRoas-pRoas)/pRoas)*100:0;
+  const dc=v=>v>0?'delta-up':v<0?'delta-down':'';
+  const ds=v=>(v>0?'+':'')+fd(v,1)+'%';
+  banner.classList.add('visible');
+  banner.innerHTML=`<span style="font-size:10px;font-weight:600">vs ${prev.s} → ${prev.e}</span>
+    <span class="compare-chip">Revenue <span class="${dc(rd)}">${ds(rd)}</span> ${fK(pr)}→${fK(cr)}</span>
+    <span class="compare-chip">Spend <span class="${dc(sd)}">${ds(sd)}</span> ${fK(ps)}→${fK(cs)}</span>
+    <span class="compare-chip">ROAS <span class="${dc(rrd)}">${ds(rrd)}</span> ${fd(pRoas)}x→${fd(cRoas)}x</span>`;
+}
+
+function aggregatePeriod(clientId){
+  const entries=activePeriodStart?dailyEntries.filter(e=>e.clientId===clientId&&e.date>=activePeriodStart&&e.date<=activePeriodEnd):dailyEntries.filter(e=>e.clientId===clientId);
+  return{
+    revenue:entries.reduce((a,e)=>a+e.revenue,0),
+    spend:entries.reduce((a,e)=>a+e.spend,0),
+    orders:entries.reduce((a,e)=>a+e.orders,0),
+    newOrders:entries.reduce((a,e)=>a+e.newOrders,0),
+    newRev:entries.reduce((a,e)=>a+e.newRev,0),
+    returnOrders:entries.reduce((a,e)=>a+(e.returnOrders||0),0),
+    returnRev:entries.reduce((a,e)=>a+(e.returnRev||0),0),
+    days:entries.length,
+  };
+}
+
+
+// ── TIP ENGINE (client-relative, zero fixed benchmarks) ─────────────────
+function generateTips(c, m) {
+  const tips = [];
+  const gm = c.margin / 100;
+
+  // ROAS vs client's own BEROAS
+  if (m.days >= 3 && m.spend > 0) {
+    const revGap = Math.abs((m.beroas - m.roas) * m.spend);
+    if (m.roas < m.beroas * 0.8) {
+      const revenueNeeded = Math.round(m.beroas * m.spend);
+      tips.push({ level: 'critical', icon: '🚨', text: 'Generating $' + Math.round(m.revenue) + ' on $' + Math.round(m.spend) + ' spend. Need $' + revenueNeeded + ' to hit your ' + m.beroas.toFixed(2) + 'x breakeven — $' + Math.round(revGap) + ' gap. Do not increase budget.' });
+    } else if (m.roas < m.beroas) {
+      tips.push({ level: 'warning', icon: '⚠️', text: '$' + Math.round(revGap) + ' short of your breakeven this period (' + m.beroas.toFixed(2) + 'x). Hold spend and improve offer or creative first.' });
+    } else if (m.roas >= m.beroas * 1.4) {
+      const profitPerDollar = ((m.roas - m.beroas) * gm).toFixed(2);
+      tips.push({ level: 'success', icon: '🚀', text: 'Every $1 spent is returning $' + profitPerDollar + ' gross profit above your breakeven. Strong signal to scale.' });
+    }
+  }
+
+  // AOV impact on BEROAS
+  if (m.beroas > 2.0 && c.aov > 0) {
+    const cogs = c.aov * (1 - gm);
+    const aovFor2x = Math.round(cogs / 0.5);
+    const aovIncrease = aovFor2x - c.aov;
+    if (aovIncrease > 0 && aovIncrease < c.aov * 1.5) {
+      tips.push({ level: 'info', icon: '💡', text: 'Raising AOV by $' + aovIncrease + ' (to $' + aovFor2x + ') would bring your BEROAS from ' + m.beroas.toFixed(2) + 'x down to ~2.00x — the same margin, easier to scale.' });
+    }
+  }
+
+  // nCPA vs client's own BECPA
+  if (m.nCPA > 0 && m.becpa > 0) {
+    const ratio = m.nCPA / m.becpa;
+    if (ratio > 1.15) {
+      const lossPerCustomer = (m.nCPA - m.becpa).toFixed(2);
+      tips.push({ level: 'critical', icon: '🚨', text: 'Spending $' + m.nCPA.toFixed(2) + ' per new customer but only making $' + m.becpa.toFixed(2) + ' gross profit — losing $' + lossPerCustomer + ' on every new customer acquired.' });
+    } else if (ratio > 1.0) {
+      tips.push({ level: 'warning', icon: '⚠️', text: 'New customer CPA ($' + m.nCPA.toFixed(2) + ') is ' + ((ratio-1)*100).toFixed(0) + '% above your breakeven CPA ($' + m.becpa.toFixed(2) + '). Small creative or offer improvement would flip this.' });
+    } else if (ratio < 0.75) {
+      tips.push({ level: 'success', icon: '✅', text: 'New customer CPA is $' + (m.becpa - m.nCPA).toFixed(2) + ' below your breakeven — new acquisition is profitable and efficient.' });
+    }
+  }
+
+  // Ads profitable but net is not
+  if (m.days >= 5 && m.netProfit < 0 && m.roas >= m.beroas) {
+    const opexPct = (((c.opex||0) / m.revenue) * 100).toFixed(1);
+    tips.push({ level: 'warning', icon: '⚠️', text: 'Ad ROAS is above breakeven but total profit is negative. Non-ad costs ($' + (c.opex||0) + '/mo) are consuming ' + opexPct + '% of revenue this period.' });
+  }
+
+  // Net margin fragility — relative to their own costs
+  if (m.days >= 5 && m.netProfit > 0 && m.totalCosts > 0) {
+    const revenueDropToBreakeven = m.revenue - m.totalCosts / gm;
+    const dropPct = ((revenueDropToBreakeven / m.revenue) * 100).toFixed(0);
+    if (parseFloat(dropPct) < 15 && parseFloat(dropPct) > 0) {
+      tips.push({ level: 'info', icon: '💡', text: 'Profitable but a ' + dropPct + '% drop in revenue would push net profit negative given your current cost structure. Keep an eye on ROAS stability.' });
+    }
+  }
+
+  // New customer ratio — relative to their own split
+  if (m.days >= 5 && m.orders > 0 && m.newOrders > 0) {
+    if (m.ncred < 20) {
+      tips.push({ level: 'warning', icon: '💡', text: 'Only ' + m.ncred.toFixed(0) + '% of revenue from new customers (' + m.newOrders + ' orders). Ads may be heavily weighted toward retargeting — cold audience expansion could grow new revenue.' });
+    } else if (m.ncred > 80) {
+      const retPotential = Math.round(m.newRev * 0.25);
+      tips.push({ level: 'info', icon: '💡', text: m.ncred.toFixed(0) + '% new customer revenue — acquisition is strong. A post-purchase retention sequence could generate ~$' + retPotential + '/period from existing buyers at zero ad cost.' });
+    }
+  }
+
+  // Creative fatigue — relative to their own ROAS trend and spend
+  if (m.fatigueLevel === 3) {
+    const dailyLoss = m.dailyBudget > 0 ? Math.abs(Math.round(m.dailyBudget * (m.beroas - m.roas))).toString() : null;
+    tips.push({ level: 'critical', icon: '🎨', text: 'ROAS has been declining consistently.' + (dailyLoss ? ' At current trajectory, losing ~$' + dailyLoss + '/day vs your breakeven.' : '') + ' Upload new creatives before touching budget.' });
+  } else if (m.fatigueLevel === 2) {
+    tips.push({ level: 'warning', icon: '🎨', text: 'ROAS trend declining over several days. Not broken yet, but start preparing new creatives now — catching it early costs less than recovering after a full drop.' });
+  } else if (m.fatigueLevel === 0 && m.days >= 7) {
+    tips.push({ level: 'success', icon: '✅', text: 'Creative performance stable or improving over the last ' + m.days + ' days. No fatigue signals detected.' });
+  }
+
+  // Budget cooldown with context
+  if (m.cooldownActive && m.lastBudgetChange) {
+    const daysSince = 4 - m.cooldownDaysLeft;
+    tips.push({ level: 'info', icon: '⏳', text: 'Budget changed ' + daysSince + ' day' + (daysSince !== 1 ? 's' : '') + ' ago. ' + m.cooldownDaysLeft + ' day' + (m.cooldownDaysLeft !== 1 ? 's' : '') + ' left before the algorithm has fully re-optimized to the new spend level.' });
+  }
+
+  // Data confidence relative to their order volume
+  if (m.days > 0 && m.days < 7) {
+    tips.push({ level: 'info', icon: '📊', text: m.days + ' day' + (m.days !== 1 ? 's' : '') + ' logged (' + m.orders + ' orders). ' + Math.max(0, 7 - m.days) + ' more days will give the scaling engine enough signal to make reliable recommendations for this account.' });
+  }
+
+  // Spend per order relative to their BECPA
+  if (m.days >= 3 && m.dailyBudget > 0 && m.becpa > 0 && m.orders > 0) {
+    const ordersPerDay = m.orders / m.days;
+    if (ordersPerDay < 1) {
+      const spendForOneOrder = Math.round(m.becpa * 1.1);
+      tips.push({ level: 'info', icon: '💡', text: 'Averaging ' + ordersPerDay.toFixed(1) + ' orders/day. At your breakeven CPA of $' + m.becpa.toFixed(0) + ', ~$' + spendForOneOrder + '/day spend would generate roughly 1 order/day — the minimum for Meta to start optimizing effectively.' });
+    }
+  }
+
+  // No offer logged
+  if ((!c.iao || c.iao === 'None') && m.spend > 0) {
+    tips.push({ level: 'info', icon: '🎯', text: 'No acquisition offer logged. Tracking your current offer lets you compare performance across different offers over time — one of the highest-leverage inputs for improving new customer CPA.' });
+  }
+
+  // Scale signal + creative declining
+  if ((m.scaleVerdict === 'SCALE HARD' || m.scaleVerdict === 'SCALE') && m.fatigueLevel >= 2) {
+    const budgetIncrease = m.scaleVerdict === 'SCALE HARD' ? 0.3 : 0.2;
+    const addedSpend = Math.round(m.dailyBudget * budgetIncrease);
+    tips.push({ level: 'warning', icon: '⚠️', text: 'Numbers support scaling but creative is declining. Adding $' + addedSpend + '/day on fatiguing ads risks accelerating losses. Refresh creatives first, then scale.' });
+  }
+
+  return tips;
+}
+// ── RENDER + NAV ──────────────────────────────────────────────────────────
+function renderAll() {
+  updatePeriodLabel();
+  buildMonthTabs();
+  const data=getFiltered();
+  renderCompareBanner(data);
+  renderSummary(data);
+  renderOverview(data);
+  renderAcquisition(data);
+  renderProfitability(data);
+  renderDailyTracker();
+  renderIaoTracker();
+  renderPasswords();
+  if(isMobile()) renderMobileCards(data);
+}
+
+function goTab(name,el){
+  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.main-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('agency-'+name).classList.add('active');
+  const btn=el||document.getElementById('mtab-'+name);
+  if(btn) btn.classList.add('active');
+}
+
+async function addClient(){
+  // reset form
+  ['nc-name','nc-iao','nc-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['nc-margin','nc-aov','nc-opex'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const ncComm=document.getElementById('nc-commission');if(ncComm)ncComm.value='10';
+  const st=document.getElementById('nc-status');if(st)st.value='testing';
+  updateCodePreview();
+  document.getElementById('add-client-modal').classList.add('show');
+  setTimeout(()=>{const n=document.getElementById('nc-name');if(n)n.focus();},100);
+}
+
+let _ncCode = '';
+function updateCodePreview(){
+  const name=(document.getElementById('nc-name').value||'').trim();
+  const prefix=name.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);
+  if(!prefix){ const p=document.getElementById('nc-code-preview'); if(p) p.textContent='---'; return; }
+  // only regenerate if prefix changed
+  if(!_ncCode||!_ncCode.startsWith(prefix+'-')){
+    _ncCode=prefix+'-'+Math.floor(1000+Math.random()*9000);
+  }
+  const preview=document.getElementById('nc-code-preview');
+  if(preview) preview.textContent=_ncCode;
+}
+
+function closeAddClientModal(){
+  document.getElementById('add-client-modal').classList.remove('show');
+}
+
+async function submitAddClient(){
+  const name=(document.getElementById('nc-name').value||'').trim();
+  if(!name){document.getElementById('nc-name').focus();document.getElementById('nc-name').style.borderColor='var(--red)';return;}
+  document.getElementById('nc-name').style.borderColor='';
+  const status=document.getElementById('nc-status').value||'testing';
+  const margin=parseFloat(document.getElementById('nc-margin').value)||45;
+  const aov=parseFloat(document.getElementById('nc-aov').value)||80;
+  const opex=parseFloat(document.getElementById('nc-opex').value)||0;
+  const iao=(document.getElementById('nc-iao').value||'').trim()||'None';
+  const notes=(document.getElementById('nc-notes').value||'').trim();
+  const commEl=document.getElementById('nc-commission');
+  const commissionRate=commEl?parseFloat(commEl.value)||10:10;
+  const pw=_ncCode||name.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3)+'-'+Math.floor(1000+Math.random()*9000);
+  _ncCode='';
+  // make sure we have agency id
+  if(!currentAgencyId){ await loadAgency(); }
+  if(!currentAgencyId){ alert('Session error — please sign out and sign back in.'); return; }
+  document.getElementById('add-client-modal').classList.remove('show');
+  showSaving();
+  const{data,error}=await sb.from('clients').insert({
+    agency_id:currentAgencyId,name,password:pw,status,
+    aov,margin,cogs:0,opex,fees:0,iao,notes,commission_rate:commissionRate
+  }).select().single();
+  hideSaving();
+  if(error){ console.error('Add client error:',error); alert('Error adding client: '+error.message); return; }
+  if(data){ clients.push(mapClient(data)); renderAll(); }
+}
+
+function exportCSV(){
+  const headers=['Client','Status','Revenue','Spend','Orders','ROAS','BEROAS','MER','aMER','CPA','BECPA','Forecast','Commission','Budget Action','New Orders','New Rev','nAOV','nCPA','Offer Profit','Return Orders','Return Rev','rAOV','%NCRed','CAC','BECAC','CALC','COGS','COGS GP%','GPM%','Weighted GPM','OpEx','Fees','Gross Profit','Net Profit','Net Margin%','Client Net','Acquisition Offer','Notes'];
+  const rows=clients.map(c=>{const m=calc(c);return[c.name,c.status,m.revenue,m.spend.toFixed(0),m.orders,fd(m.roas),fd(m.beroas),fd(m.roas),fd(m.amer),fd(m.cpa),fd(m.becpa),m.forecastRev.toFixed(0),m.commission.toFixed(2),m.budgetAction,m.newOrders,m.newRev,fd(m.nAOV),fd(m.nCPA),fd(m.iaoProfitability),m.returnOrders,m.returnRev,fd(m.rAOV),fP(m.ncred),fd(m.cac),fd(m.becac),fd(m.calcVal),c.cogs||0,fP(m.cogsGP),c.margin,fP(m.weightedGPM),c.opex||0,c.fees||0,m.grossProfit.toFixed(2),m.netProfit.toFixed(2),fP(m.netMargin),m.clientNet.toFixed(2),c.iao||'',c.notes||''];});
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='mcx_tracker.csv';a.click();
+}
+
+
+// ── MOBILE CARD RENDERING ─────────────────────────────────────────────────
+function isMobile(){ return window.innerWidth <= 768; }
+
+function renderMobileCards(data){
+  // Remove old mobile cards
+  document.querySelectorAll('.mobile-cards').forEach(el=>el.remove());
+
+  // Overview mobile cards
+  const overviewPanel = document.getElementById('agency-overview');
+  if(overviewPanel){
+    const wrap = document.createElement('div');
+    wrap.className = 'mobile-cards';
+    data.forEach(c=>{
+      const m=calc(c);
+      const roasCls=rC(m.roas,m.beroas);
+      const roasColor=roasCls==='g'?'var(--green)':roasCls==='w'?'var(--amber)':'var(--red)';
+      const netCls=pC(m.netProfit);
+      const netColor=netCls==='g'?'var(--green)':netCls==='w'?'var(--amber)':'var(--red)';
+      const card = document.createElement('div');
+      card.style.cssText='background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;';
+      card.innerHTML=`
+        <div style="padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:14px;font-weight:600;">${c.name}</div>
+            <div style="margin-top:3px;"><span class="badge ${c.status}">${c.status}</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:18px;font-weight:600;color:${roasColor}">${fd(m.roas)}x</div>
+            <div style="font-size:10px;color:var(--text3);">ROAS · BE: ${fd(m.beroas)}x</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:10px 14px;gap:8px;">
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Revenue</div>
+            <div style="font-size:14px;font-weight:600;color:var(--green)">${fK(m.revenue)}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">CPA</div>
+            <div style="font-size:14px;font-weight:600;color:${cC(m.cpa,m.becpa)==='g'?'var(--green)':cC(m.cpa,m.becpa)==='w'?'var(--amber)':'var(--red)'}" >$${fd(m.cpa)}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Net Profit</div>
+            <div style="font-size:14px;font-weight:600;color:${netColor}">${fK(m.netProfit)}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:0 14px 10px;gap:8px;border-top:0.5px solid var(--border);padding-top:8px;">
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Spend/day</div>
+            <div style="font-size:12px;font-weight:500;color:var(--text2)">$${fd(m.dailyBudget,0)}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Commission</div>
+            <div style="font-size:12px;font-weight:500;color:var(--accent)">${fK(m.commission)}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Scaling</div>
+            <div><span class="${bCls(m.budgetPct)}" style="font-size:9px;">${m.scaleVerdict||m.budgetAction}</span></div>
+          </div>
+        </div>
+        <div style="padding:8px 14px;border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span class="iao-tag" style="font-size:9px;">${c.iao||'No offer'}</span>
+          ${(()=>{const t=generateTips(c,m);return t.length>0?`<span style="font-size:9px;font-weight:600;background:rgba(200,240,96,0.1);color:var(--accent);padding:2px 7px;border-radius:4px;border:0.5px solid rgba(200,240,96,0.2)">${t.length} tip${t.length!==1?'s':''}</span>`:'';})()}
+        </div>`;
+      wrap.appendChild(card);
+    });
+    overviewPanel.appendChild(wrap);
+  }
+
+  // Profitability mobile cards
+  const profitPanel = document.getElementById('agency-profitability');
+  if(profitPanel){
+    const wrap2 = document.createElement('div');
+    wrap2.className = 'mobile-cards';
+    data.forEach(c=>{
+      const m=calc(c);
+      const card=document.createElement('div');
+      card.style.cssText='background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;';
+      card.innerHTML=`
+        <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;font-weight:600;">${c.name}</div>
+          <span class="badge ${c.status}">${c.status}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;padding:10px 14px;gap:10px;">
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Gross Profit</div><div style="font-size:14px;font-weight:600;color:${pC(m.grossProfit)==='g'?'var(--green)':'var(--red)'}">${fK(m.grossProfit)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Net Profit</div><div style="font-size:14px;font-weight:600;color:${pC(m.netProfit)==='g'?'var(--green)':'var(--red)'}">${fK(m.netProfit)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Net Margin</div><div style="font-size:14px;font-weight:600;color:${m.netMargin>20?'var(--green)':m.netMargin>5?'var(--amber)':'var(--red)'}">${fP(m.netMargin)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">GPM %</div><div style="font-size:14px;font-weight:600;">${fP(c.margin)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Commission</div><div style="font-size:14px;font-weight:600;color:var(--accent)">${fK(m.commission)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Client Net</div><div style="font-size:14px;font-weight:600;color:${pC(m.clientNet)==='g'?'var(--green)':'var(--red)'}">${fK(m.clientNet)}</div></div>
+        </div>`;
+      wrap2.appendChild(card);
+    });
+    profitPanel.appendChild(wrap2);
+  }
+
+  // Acquisition mobile cards
+  const acqPanel = document.getElementById('agency-acquisition');
+  if(acqPanel){
+    const wrap3 = document.createElement('div');
+    wrap3.className = 'mobile-cards';
+    data.forEach(c=>{
+      const m=calc(c);
+      const card=document.createElement('div');
+      card.style.cssText='background:var(--bg2);border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;';
+      card.innerHTML=`
+        <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;font-weight:600;">${c.name}</div>
+          <span class="badge ${c.status}">${c.status}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;padding:10px 14px;gap:10px;">
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">New Orders</div><div style="font-size:14px;font-weight:600;">${m.newOrders}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">New Revenue</div><div style="font-size:14px;font-weight:600;color:var(--green)">${fK(m.newRev)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">nCPA</div><div style="font-size:14px;font-weight:600;color:${cC(m.nCPA,m.becpa)==='g'?'var(--green)':cC(m.nCPA,m.becpa)==='w'?'var(--amber)':'var(--red)'}">${m.nCPA>0?'$'+fd(m.nCPA):'—'}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Offer Profit</div><div style="font-size:14px;font-weight:600;color:${m.iaoProfitability>0?'var(--green)':m.iaoProfitability>-10?'var(--amber)':'var(--red)'}">${m.iaoProfitability>=0?'+':''}$${fd(m.iaoProfitability)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">% NCRed</div><div style="font-size:14px;font-weight:600;">${fP(m.ncred)}</div></div>
+          <div><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">CAC</div><div style="font-size:14px;font-weight:600;">${m.cac>0?'$'+fd(m.cac):'—'}</div></div>
+        </div>`;
+      wrap3.appendChild(card);
+    });
+    acqPanel.appendChild(wrap3);
+  }
+}
+
+
+// ── BUDGET CHANGE MODAL ────────────────────────────────────────────────────
+let _bcClientId = null;
+
+function openBudgetChangeModal(clientId){
+  _bcClientId = clientId;
+  document.getElementById('bc-action').value='scale +20%';
+  document.getElementById('bc-prev').value='';
+  document.getElementById('bc-new').value='';
+  document.getElementById('bc-notes').value='';
+  document.getElementById('bc-modal').style.display='flex';
+}
+
+function closeBcModal(){
+  document.getElementById('bc-modal').style.display='none';
+  _bcClientId=null;
+}
+
+async function submitBcModal(){
+  if(!_bcClientId) return;
+  const action=document.getElementById('bc-action').value;
+  const prevBudget=parseFloat(document.getElementById('bc-prev').value)||0;
+  const newBudget=parseFloat(document.getElementById('bc-new').value)||0;
+  const notes=document.getElementById('bc-notes').value.trim();
+  const pct = prevBudget>0 ? Math.round(((newBudget-prevBudget)/prevBudget)*100) : 0;
+  const today=new Date().toISOString().split('T')[0];
+  closeBcModal();
+  const bc={clientId:_bcClientId,date:today,action,pct,prevBudget,newBudget,notes};
+  const saved=await saveBudgetChange(bc);
+  if(saved){bc.id=saved.id;budgetChanges.push(bc);renderAll();}
+}
+
+async function deleteBudgetChangeEntry(id, clientId){
+  if(!confirm('Delete this budget change entry?')) return;
+  await deleteBudgetChange(id);
+  budgetChanges=budgetChanges.filter(bc=>bc.id!==id);
+  renderAll();
+}
+
+
+// ── DEMO MODE ─────────────────────────────────────────────────────────────
+function loadDemo(){
+  currentUser = { id:'demo', email:'demo@usemetrik.app' };
+  currentAgencyId = 'demo-agency';
+  currentAgencyName = 'Demo Agency';
+
+  // Demo clients
+  clients = [
+    { id:'c1', name:'SKIIWRLD', password:'SKI-7823', status:'scaling', aov:95, margin:52, cogs:800, opex:200, fees:50, iao:'Free shipping $80+', notes:'Strong performer — scaling carefully', commissionRate:10 },
+    { id:'c2', name:'Savant Club', password:'SAV-4411', status:'active', aov:78, margin:48, cogs:600, opex:150, fees:30, iao:'BOGO on hats', notes:'New creative dropped 3 days ago', commissionRate:10 },
+    { id:'c3', name:'Sanity Fragments', password:'SAN-3356', status:'testing', aov:65, margin:44, cogs:400, opex:100, fees:20, iao:'10% off first order', notes:'Still in testing phase', commissionRate:8 },
+    { id:'c4', name:'888 Brand', password:'888-9901', status:'active', aov:110, margin:55, cogs:900, opex:250, fees:40, iao:'Free gift over $100', notes:'AOV improving week over week', commissionRate:12 },
+    { id:'c5', name:'Balexandert', password:'BAL-7700', status:'paused', aov:88, margin:46, cogs:500, opex:120, fees:25, iao:'None', notes:'Paused for creative refresh', commissionRate:10 },
+  ];
+
+  // Generate realistic daily entries for last 21 days
+  const today = new Date();
+  dailyEntries = [];
+  const clientConfigs = [
+    { id:'c1', baseSpend:180, baseRoas:3.1, trend:0.02, newOrderRatio:0.65 },
+    { id:'c2', baseSpend:120, baseRoas:2.4, trend:-0.03, newOrderRatio:0.55 },
+    { id:'c3', baseSpend:60,  baseRoas:1.8, trend:0.01, newOrderRatio:0.70 },
+    { id:'c4', baseSpend:220, baseRoas:2.8, trend:0.01, newOrderRatio:0.50 },
+    { id:'c5', baseSpend:0,   baseRoas:0,   trend:0,    newOrderRatio:0.60 },
+  ];
+
+  let entryId = 1;
+  clientConfigs.forEach(cfg => {
+    for(let d = 20; d >= 0; d--){
+      if(cfg.baseSpend === 0) continue; // paused
+      const date = new Date(today);
+      date.setDate(today.getDate() - d);
+      const dateStr = date.toISOString().split('T')[0];
+      // Add some realistic variance
+      const variance = 0.85 + Math.random() * 0.3;
+      const trendFactor = 1 + (cfg.trend * (20 - d));
+      const spend = Math.round(cfg.baseSpend * variance * trendFactor);
+      const roas = (cfg.baseRoas + (Math.random() * 0.4 - 0.2)) * trendFactor;
+      const revenue = Math.round(spend * roas);
+      const client = clients.find(c => c.id === cfg.id);
+      const aov = client ? client.aov : 80;
+      const orders = Math.max(1, Math.round(revenue / aov));
+      const newOrders = Math.round(orders * cfg.newOrderRatio);
+      const returnOrders = orders - newOrders;
+      const newRev = Math.round(newOrders * aov * 1.05);
+      const returnRev = revenue - newRev;
+
+      dailyEntries.push({
+        id: 'de' + entryId++,
+        clientId: cfg.id,
+        date: dateStr,
+        spend, revenue, orders, newOrders, newRev,
+        returnOrders: Math.max(0, returnOrders),
+        returnRev: Math.max(0, returnRev),
+        notes: ''
+      });
+    }
+  });
+
+  // Demo IAO log
+  iaoLog = [
+    { id:'i1', clientId:'c1', offer:'Free shipping $80+', startDate:'2026-03-01', endDate:null },
+    { id:'i2', clientId:'c1', offer:'Free shipping $60+', startDate:'2026-02-01', endDate:'2026-02-28' },
+    { id:'i3', clientId:'c2', offer:'BOGO on hats', startDate:'2026-03-10', endDate:null },
+    { id:'i4', clientId:'c4', offer:'Free gift over $100', startDate:'2026-03-05', endDate:null },
+  ];
+
+  // Demo budget changes
+  budgetChanges = [
+    { id:'bc1', clientId:'c1', date:'2026-03-14', action:'scale +20%', pct:20, prevBudget:150, newBudget:180, notes:'ROAS holding above 3x' },
+    { id:'bc2', clientId:'c2', date:'2026-03-15', action:'cut -10%', pct:-10, prevBudget:130, newBudget:120, notes:'ROAS dipping' },
+  ];
+
+  // Show demo banner
+  const chip = document.getElementById('agency-name-chip');
+  if(chip) chip.textContent = 'Demo Mode';
+  const emailChip = document.getElementById('user-email-chip');
+  if(emailChip) emailChip.textContent = 'demo@usemetrik.app';
+
+  showScreen('screen-agency');
+  updatePeriodLabel();
+  renderAll();
+
+  // Show demo notice
+  setTimeout(()=>{
+    const bar = document.querySelector('.top-bar');
+    if(bar && !document.getElementById('demo-banner')){
+      const banner = document.createElement('div');
+      banner.id = 'demo-banner';
+      banner.style.cssText = 'width:100%;background:var(--accent-dim);border-bottom:0.5px solid rgba(200,240,96,0.2);padding:6px 20px;font-size:11px;color:var(--accent);font-weight:500;text-align:center;';
+      banner.textContent = '👋 Demo mode — data is simulated. Sign up to track your real clients.';
+      bar.insertAdjacentElement('afterend', banner);
+    }
+  }, 100);
+}
+// ── KICK OFF ──────────────────────────────────────────────────────────────
+boot();
+window.addEventListener("resize", () => { if(document.getElementById("screen-agency").classList.contains("active")) renderAll(); });
+</script>
+
+
+
+<!-- BUDGET CHANGE MODAL -->
+<div id="bc-modal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);" onclick="closeBcModal()"></div>
+  <div style="position:relative;z-index:10000;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-xl);width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.8);overflow:hidden;">
+    <div class="mhd">
+      <h3>Log Budget Change</h3>
+      <button class="mhd-x" onclick="closeBcModal()">&#215;</button>
+    </div>
+    <div class="mbody">
+      <div>
+        <label class="mlabel">Action</label>
+        <select class="mselect" id="bc-action">
+          <option value="scale +10%">Scale +10%</option>
+          <option value="scale +20%">Scale +20%</option>
+          <option value="scale +30%">Scale +30%</option>
+          <option value="bump +5%">Bump +5%</option>
+          <option value="cut -10%">Cut -10%</option>
+          <option value="cut -20%">Cut -20%</option>
+          <option value="cut -50%">Cut -50%</option>
+          <option value="paused">Paused</option>
+          <option value="resumed">Resumed</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="mrow">
+        <div>
+          <label class="mlabel">Previous Daily Budget ($)</label>
+          <input class="minput" id="bc-prev" type="number" placeholder="e.g. 100" min="0">
+        </div>
+        <div>
+          <label class="mlabel">New Daily Budget ($)</label>
+          <input class="minput" id="bc-new" type="number" placeholder="e.g. 120" min="0">
+        </div>
+      </div>
+      <div>
+        <label class="mlabel">Notes (optional)</label>
+        <input class="minput" id="bc-notes" placeholder="e.g. Testing new creative, ROAS holding">
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn ghost" onclick="closeBcModal()">Cancel</button>
+      <button class="btn primary" onclick="submitBcModal()">Log Change</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CLIENT MODAL -->
+<div class="modal-overlay" id="add-client-modal" onclick="if(event.target===this)closeAddClientModal()">
+  <div class="modal-backdrop"></div>
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add New Client</h3>
+      <button class="modal-close" onclick="closeAddClientModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <div class="modal-field full">
+          <label class="modal-label">Client / Brand Name</label>
+          <input class="modal-input" id="nc-name" placeholder="Brand or client name" oninput="updateCodePreview()">
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field">
+          <label class="modal-label">Status</label>
+          <select class="modal-select" id="nc-status">
+            <option value="testing">Testing</option>
+            <option value="active">Active</option>
+            <option value="scaling">Scaling</option>
+            <option value="paused">Paused</option>
+            <option value="dead">Dead</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Gross Margin %</label>
+          <input class="modal-input" id="nc-margin" type="number" placeholder="e.g. 45 for 45%" min="1" max="100">
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field">
+          <label class="modal-label">AOV ($)</label>
+          <input class="modal-input" id="nc-aov" type="number" placeholder="Average order value" min="1">
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Commission Rate (%)</label>
+          <input class="modal-input" id="nc-commission" type="number" placeholder="e.g. 10" min="0" max="100" value="10">
+          <span class="modal-hint" style="margin-top:2px;">Enter 0 for flat retainer</span>
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field full">
+          <label class="modal-label">Monthly OpEx ($)</label>
+          <input class="modal-input" id="nc-opex" type="number" placeholder="Shopify, apps, software fees..." min="0">
+          <span class="modal-hint" style="margin-top:2px;">Close estimate is fine</span>
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field full">
+          <label class="modal-label">Acquisition Offer</label>
+          <input class="modal-input" id="nc-iao" placeholder="e.g. Free shipping $75+, 10% off first order">
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field full">
+          <label class="modal-label">Notes</label>
+          <input class="modal-input" id="nc-notes" placeholder="Optional notes...">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 0;">
+        <div>
+          <div class="modal-label" style="margin-bottom:4px;">Client Access Code</div>
+          <div class="modal-code-preview" id="nc-code-preview">---</div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);max-width:200px;text-align:right;">Auto-generated from name. Share with your client so they can log in.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeAddClientModal()">Cancel</button>
+      <button class="btn primary" onclick="submitAddClient()">Add Client</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

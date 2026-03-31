@@ -3,10 +3,5 @@
     { "source": "/app", "destination": "/app.html" },
     { "source": "/MCX", "destination": "/MCX.html" },
     { "source": "/api/:path*", "destination": "/api/:path*" }
-  ],
-  "functions": {
-    "api/stripe-webhook.js": {
-      "bodyParser": false
-    }
-  }
+  ]
 }

@@ -3480,7 +3480,7 @@ function selectDate(id, dateStr, prefix='dp') {
   const drop = document.getElementById(dropId); if(drop) drop.innerHTML=buildPickerGrid(id,prefix);
 }
 document.addEventListener('click', e => {
-  if(!e.target.closest('.date-picker-wrap')){
+  if(!e.target.closest('.date-picker-wrap') && !e.target.closest('.date-picker-dropdown')){
     document.querySelectorAll('.date-picker-dropdown').forEach(d=>d.classList.remove('open'));
     document.querySelectorAll('.date-display').forEach(d=>d.classList.remove('open'));
   }

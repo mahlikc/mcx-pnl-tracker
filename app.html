@@ -5464,9 +5464,12 @@ async function deleteCollection(clientId, date) {
   const c = clients.find(x => x.id === clientId);
   if (!c || !c.marginHistory) return;
   c.marginHistory = c.marginHistory.filter(p => p.date !== date);
+  // If no collections left, clear marginHistory entirely so weighted calc uses c.margin
+  if (c.marginHistory.length === 0) c.marginHistory = [];
   await saveClient(c);
   activeCollection[clientId] = null;
-  renderDailyTracker();
+  // Force full re-render so weighted beroas recalculates from scratch
+  renderAll();
   showToast('Collection removed.', 'info');
 }
 
